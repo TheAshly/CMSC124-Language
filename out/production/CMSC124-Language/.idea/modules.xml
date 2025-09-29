@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Lexical Scanner.iml" filepath="$PROJECT_DIR$/Lexical Scanner.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/CMSC124-Language.iml" filepath="$PROJECT_DIR$/.idea/CMSC124-Language.iml" />
     </modules>
   </component>
 </project>
