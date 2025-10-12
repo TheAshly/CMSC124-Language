@@ -18,30 +18,34 @@ The language takes itself from a lot of references such as java/C/python but str
 
 Dear - function call.
 Sincerely - returns a value.
-If, Else, and Otherwise if - for if else statements.
+If, Else, and Otherwise - for if else statements.
 For - for loops.
 While - while loops.
-Let’s move on. (placeholder) - break loops
-Please repeat what’s stated. (placeholder) - continue to the next iteration of loops
+Abandon - break loops
+Recommence - continue to the next iteration of loops
+Append - concatenation
+
 
 ##Operators
 [List all operators organized by category (arithmetic, comparison, logical, assignment, etc.)]
 
 or & and - Logical Operators
 equals & refer - Assignment Operator for Numeric and Sequence type respectively.
-not, positive, & negative - Unary Operators
-equal, greater than, less than, etc.  - Comparison Operators
-add, subtract, multiply, divide, modulo - Arithmetic Operators
-Increment & Decrement - Operators
+not & invert- Unary Operators
+equivaling, exceeding, & below - Comparison Operators
+add, subtract, multiply, over, modulo - Arithmetic Operators
+
 
 ##Literals
 [Describe the format and syntax for each type of literal value (e.g., numbers, strings, characters, etc.) your language supports]
 
 Int - numerical values.
-Float - decimal version of int.
+Decimal- float version of int.
 Proposition (boolean) - It’s factual / It’s faulty (case grammar sensitive).
 Sentences (string) - enclosed in double quotation marks.
 Letter (char) - also enclosed in double quotes.
+Null - null/empty values
+
 
 ##Identifiers
 [Define the rules for valid identifiers (variable names, function names, etc.) and whether they are case-sensitive]
@@ -58,13 +62,23 @@ For variables and function names:
 ##Syntax Style
 [Describe whether whitespace is significant, how statements are terminated, and what delimiters are used for blocks and grouping]
 
-Code line ends with a period as with sentences.
-Most things must be in the title case unless written otherwise.
-Indention Matters.
-Use parenthesis for formatting in statements.
-"to" signifies an assignment or comparison
-“it’s” signifies a start of a boolean expression
+Code ends with a period and code blocks use comma and indention.
+Keywords must be in lowercase, unless it’s the first word of the sentence then there’s leniency.
+Identifiers must be in Titlecase.
+Use parenthesis () for formatting.
+“Is” signifies a start of a boolean expression
 “In” signifies a range
+“to” signifies an assignment
+“it” creates a placeholder identifier in loops
+
+
+##Grammar
+expression 	→ comparison { ( "or" | "and” ) comparison }
+comparison  → term [“is” ([“not”] “equivaling" | (“exceeding”|”below”)[“or” “equivaling”] ) term ]
+term       	→ factor { ( "add" | "subtract"|”multiply”|”over”|”modulo”) factor }
+factor		→ ( "invert" | "not" ) factor | primary
+primary    	→ NUMBER | STRING | "factual" | "faulty" | "empty" | IDENTIFIER
+
 
 ##Sample Code
 [Provide a few examples of valid code in your language to demonstrate the syntax and features]
