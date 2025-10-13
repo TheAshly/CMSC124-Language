@@ -35,9 +35,14 @@ class Parser() {
             val operator = currToken.type
             lex()
             val value = comparator()
-            if(value.checkLeaf()) expr = Node(operator, expr, value)
+            if(value.checkLeaf() && expr.checkLeaf()) expr = Node(operator, expr, value)
             else {
-                println("[Line ${currToken.line}] Syntax Error: Expecting expression after \"$operator\".")
+                if(expr.checkLeaf()){
+                    println("[Line ${currToken.line}] Syntax Error: Expecting expression after \"$operator\".")
+                } else {
+                    println("[Line ${currToken.line}] Syntax Error: Cannot \"$operator\" none existing variable.")
+                }
+                expr = Node(null, null, null)
             }
         }
        return expr
@@ -66,7 +71,7 @@ class Parser() {
                     }
                     else {
                         println("[Line ${currToken.line}] Syntax Error: Expecting comparator after \"or\".")
-                        lex()
+                        return Node(null, null, null)
                     }
                 }
                 expr = Node(operator, expr, term())
@@ -82,6 +87,7 @@ class Parser() {
                     expr = Node(operator, expr, term())
                 } else {
                     println("[Line ${currToken.line}] Syntax Error: Expecting comparator after \"is\".")
+                    expr = Node(null, null, null)
                 }
             }
         }
@@ -96,9 +102,14 @@ class Parser() {
             val operator = currToken.type
             lex()
             val value = factor()
-            if(value.center != null) expr = Node(operator, expr, value)
+            if(value.checkLeaf() && expr.checkLeaf()) expr = Node(operator, expr, value)
             else {
-                println("[Line ${currToken.line}] Syntax Error: Expecting factor after the first \"$operator\".")
+                if(expr.checkLeaf()){
+                    println("[Line ${currToken.line}] Syntax Error: Expecting factor after \"$operator\".")
+                } else {
+                    println("[Line ${currToken.line}] Syntax Error: Cannot \"$operator\" to not existing variable.")
+                }
+                return Node(null, null, null)
             }
         }
         return expr
@@ -107,7 +118,7 @@ class Parser() {
     // Factor: ( "invert" | "not" ) factor | primary
     // Sends an error when what comes after the negation does not exist
     fun factor(): Node{
-        var expr: Node
+        var expr: Node = Node(null, null, null)
         if (currToken.type in setOf("invert", "not")) {
             val operator = currToken.type
             lex()
@@ -119,8 +130,19 @@ class Parser() {
             }
 
         } else {
-            expr = Node(primary(), null, null)
+            val placeholder = primary()
             lex()
+            if(placeholder != null){
+                if(currToken.type in setOf("Numeric","String", "factual","faulty")) {
+                    println("[Line ${currToken.line}] Syntax Error: Another literal after a literal was already declared.")
+                } else if("Exception" in currToken.type){
+                    println(currToken.type)
+                } else if("Error" in currToken.type || currToken.type == "Identifier") {
+                    println("[Line ${currToken.line}] Parsing Error: \"${currToken.lexeme}\" is not a keyword.")
+                } else {
+                    expr = Node(placeholder, null, null)
+                }
+            }
         }
         return expr
     }
@@ -128,6 +150,7 @@ class Parser() {
     // Primary: NUMBER | STRING | "factual" | "faulty" | "empty" | IDENTIFIER
     // Sends an error when the token being parsed is not a Literal
     fun primary(): String? {
+
         if(currToken.type in setOf("Numeric","String")){
             return currToken.literal
         } else if(currToken.type in setOf("factual","faulty")){
@@ -136,6 +159,7 @@ class Parser() {
             println("[Line ${currToken.line}] Parsing Error: \"${currToken.lexeme}\" is not a proper Literal.")
             return null
         }
+
     }
 
     // For printing of the Abstract Syntax Tree
