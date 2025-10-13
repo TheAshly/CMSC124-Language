@@ -69,7 +69,7 @@ Use parenthesis () for formatting.\
 “Is” signifies a start of a boolean expression\
 “In” signifies a range\
 “to” signifies an assignment\
-“it” creates a placeholder identifier in loops\
+“it” creates a placeholder identifier in loops
 
 
 ## Grammar
