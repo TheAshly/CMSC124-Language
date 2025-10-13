@@ -118,9 +118,9 @@ class Scanner {
         }
 
         // For Printing Tokens if Needed to Check, Uncomment if you want
-         for(i in tokens){
-             println("Token: Type=${i.type}, Lexeme=${i.lexeme}, Literal=${i.literal}, Line=${i.line}")
-         }
+//         for(i in tokens){
+//             println("Token: Type=${i.type}, Lexeme=${i.lexeme}, Literal=${i.literal}, Line=${i.line}")
+//         }
 
         // Calls Scanner, pushes the Token List to the parser to be parsed
         val parser = Parser()
@@ -169,10 +169,10 @@ class Scanner {
                 if(firstword || lexeme == reservedWord) {
                     tokens.add(Token(reservedWord, lexeme, null, lineNum))
                 } else {
-                    tokens.add(Token("[Line $lineNum] Capitalization Error: Did you mean $reservedWord?", lexeme, null, lineNum))
+                    tokens.add(Token("[Line $lineNum] Capitalization Exception: Did you mean $reservedWord?", lexeme, null, lineNum))
                 }
             } else if(countEditDistance(lexeme, reservedWord) <= reservedWord.length.floorDiv(2)) {
-                    tokens.add(Token("[Line $lineNum] Spelling Error: Did you mean $reservedWord?", lexeme, null, lineNum))
+                    tokens.add(Token("[Line $lineNum] Spelling Exception: Did you mean $reservedWord?", lexeme, null, lineNum))
             }  else {
                 if(identifier){
                     tokens.add(Token("Identifier", lexeme, null, lineNum))
