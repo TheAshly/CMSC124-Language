@@ -80,7 +80,7 @@ class Scanner {
     }
 
     // Checks the code line by line
-    fun scanLine(line: String) {
+    fun scanLine(line: String): MutableList<Token> {
         this.head = 0                   // Initialized the index to start of the line string
         this.line = line                // Variable Line initialized to the line String
         this.lineNum = 1                // Temp Line variable, as we're not changing lines
@@ -117,14 +117,8 @@ class Scanner {
             this.lexeme = ""
         }
 
-        // For Printing Tokens if Needed to Check, Uncomment if you want
-//         for(i in tokens){
-//             println("Token: Type=${i.type}, Lexeme=${i.lexeme}, Literal=${i.literal}, Line=${i.line}")
-//         }
-
-        // Calls Scanner, pushes the Token List to the parser to be parsed
-        val parser = Parser()
-        parser.parseTokens(tokens)
+        // Returns Token list to main to parse
+        return tokens;
     }
 
     // Checks the current word, if it's a Reserved Keyword, Identifier, or Else

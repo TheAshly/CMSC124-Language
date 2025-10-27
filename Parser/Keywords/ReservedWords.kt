@@ -2,10 +2,13 @@ enum class ReservedWords(val token: String){
 
     // Use these for checking Reserved Keywords
 
-    // Comparators
-    EQUAL("equivaling"),    // EQUAL("equal"),
+    // Value Comparators
+    EQUAL("equaling"),    // EQUAL("equal"),
+    UNEQUAL("unlike"),
     GREATER("exceeding"),   // GREATER("greater than"),
     LESS("below"),          // LESS("less than"),
+
+    // Boolean Comparators
     OR("or"),
     AND("and"),
 
@@ -31,9 +34,9 @@ enum class ReservedWords(val token: String){
     INTTYPE("equals"),
 
     // Operators
-    ADDITION("add"),
-    SUBTRACTION("subtract"),
-    MULTIPLICATION("multiply"),
+    ADDITION("plus"),
+    SUBTRACTION("minus"),
+    MULTIPLICATION("times"),
     DIVISION("over"),
     MODULO("modulo"),
 

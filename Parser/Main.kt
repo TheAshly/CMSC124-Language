@@ -47,11 +47,15 @@
 fun main(){
     // Calls Scanner
     val scanner = Scanner()
+    val parser = Parser()
+    val printer = Printer()
     while(true) {
         print(">")
         val input = readln()
         println(input)
-        scanner.scanLine(input)
+        val tokens = scanner.scanLine(input)
+        val node = parser.parseTokens(tokens)
+        printer.parserPrinter(node)
         println()
         System.gc()
     }
