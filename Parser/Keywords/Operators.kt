@@ -4,4 +4,5 @@ enum class Operators(val token: String){
     MULTIPLICATION("times"),
     DIVISION("over"),
     MODULO("modulo");
+//    EXPONENT("exponentiated");
 }

@@ -14,7 +14,7 @@ enum class ReservedWords(val token: String){
 
     // Unary
     NEGATION("not"),
-    NEGATIVE("invert"),
+    NEGATIVE("negative"),
 
     // Commands
     IF("if"),

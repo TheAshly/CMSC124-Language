@@ -49,13 +49,15 @@ fun main(){
     val scanner = Scanner()
     val parser = Parser()
     val printer = Printer()
+    val evaluator = Evaluator()
     while(true) {
         print(">")
         val input = readln()
         println(input)
         val tokens = scanner.scanLine(input)
         val node = parser.parseTokens(tokens)
-        printer.parserPrinter(node)
+//        printer.parserPrinter(node)
+        evaluator.evaluateTree(node)
         println()
         System.gc()
     }
