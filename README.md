@@ -75,7 +75,7 @@ Use parenthesis () for formatting.\
 ## Grammar
 ```
 expression 	→ comparison { ( "or" | "and" ) comparison }
-comparison  	→ term [“is” ("unlike" | "equaling" | ("exceeding"|"below")["or" "equaling"] ) term ]
+comparison  → term [“is” (["not"] "equivaling" | ("exceeding"|"below")["or" "equivaling"] ) term ]
 term       	→ factor { ( "add" | "subtract"|”multiply”|”over”|”modulo”) factor }
 factor		→ ( "invert" | "not" ) factor | primary
 primary    	→ NUMBER | STRING | "factual" | "faulty" | "empty" | IDENTIFIER
