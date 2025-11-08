@@ -48,17 +48,18 @@ fun main(){
     // Calls Scanner
     val scanner = Scanner()
     val parser = Parser()
-    val printer = Printer()
+//    val printer = Printer()
     val evaluator = Evaluator()
     while(true) {
         print(">")
         val input = readln()
-        println(input)
         val tokens = scanner.scanLine(input)
-        val node = parser.parseTokens(tokens)
-//        printer.parserPrinter(node)
-        evaluator.evaluateTree(node)
-        println()
+        val tree = parser.parseTokens(tokens)
+//        printer.scannerPrinter(tokens)
+//        printer.parserPrinter(tree)
+        if(tree != null){
+            println(evaluator.evaluateTree(tree))
+        }
         System.gc()
     }
 }

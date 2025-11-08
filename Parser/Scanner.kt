@@ -118,7 +118,7 @@ class Scanner {
         }
 
         // Returns Token list to main to parse
-        return tokens;
+        return tokens
     }
 
     // Checks the current word, if it's a Reserved Keyword, Identifier, or Else
@@ -148,7 +148,7 @@ class Scanner {
             // Adds character to the current lexeme and iterates to the next character
             lexeme += char
             head++
-        } while(checkChar() !in setOf(Character.PERIOD, Character.COMMA, Character.COMMENT, Character.SPACE,null))
+        } while(checkChar() !in hashSetOf(Character.PERIOD, Character.COMMA, Character.COMMENT, Character.SPACE,null))
 
         // If it followed proper word format it goes here otherwise it adds an error Token
         if(word){
@@ -204,7 +204,7 @@ class Scanner {
             // Adds character to the current lexeme and iterates to the next character
             lexeme += num
             head++
-        } while (checkChar() !in setOf(Character.COMMA, Character.COMMENT, Character.SPACE, null))
+        } while (checkChar() !in hashSetOf(Character.COMMA, Character.COMMENT, Character.SPACE, null))
 
         // If it followed Proper Numeric Format it goes here otherwise it adds an Error Token
         if (checker){
@@ -240,7 +240,7 @@ class Scanner {
 
             // Checks if the there is still a character after the ending quotation
             if(ended) checker = false
-        } while(!ended || checkChar() !in setOf(Character.PERIOD, Character.COMMA, Character.COMMENT,  Character.SPACE, null))
+        } while(!ended || checkChar() !in hashSetOf(Character.PERIOD, Character.COMMA, Character.COMMENT,  Character.SPACE, null))
 
         // If the statement ended properly it goes here otherwise it pushes an error token
         if (checker){

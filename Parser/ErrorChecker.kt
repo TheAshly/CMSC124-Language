@@ -15,7 +15,7 @@ class ErrorChecker {
         return true
     }
     fun checkRedundancy(token: Token): Boolean{
-        if(enumValues<Literals>().any { it.type == token.type } || enumValues<BooleanLiteral>().any { it.type == token.type }) {
+        if(ReservedWords.LITERAL.contains(token.type) || ReservedWords.BOOLEANLITERAL.contains(token.type)) {
             println("[Line ${token.line}] Syntax Error: Another literal after a literal was already declared.")
             return false
         } else if("Exception" in token.type){
@@ -29,7 +29,7 @@ class ErrorChecker {
         }
     }
     fun checkLiteral(token: Token): Boolean{
-        if(enumValues<Literals>().any { it.type == token.type } || enumValues<BooleanLiteral>().any { it.type == token.type }){
+        if(ReservedWords.LITERAL.contains(token.type) || ReservedWords.BOOLEANLITERAL.contains(token.type)){
             return true
         } else {
             println("[Line ${token.line}] Parsing Error: \"${token.lexeme}\" is not a proper Literal.")
@@ -38,7 +38,7 @@ class ErrorChecker {
     }
 
     fun checkComparator(token: Token): Boolean{
-        if (enumValues<ValueComparators>().any { it.token == token.type } || enumValues<LiteralComparators>().any { it.token == token.type }) return true
+        if (ReservedWords.VALUECOMPARATOR.contains(token.type) || ReservedWords.LITERALCOMPARATOR.contains(token.type)) return true
         else {
             println("[Line ${token.line}] Parsing Error: \"${token.lexeme}\" is not a proper comparator.")
             return false
@@ -50,6 +50,40 @@ class ErrorChecker {
             println("[Line ${token.line}] Expression Error: Expecting expression.")
             return true
         } else {
+            return false
+        }
+    }
+
+    fun checkBothBoolean(operator: Any?, left: Any?, right: Any?): Boolean{
+        if(left is Boolean && right is Boolean){
+            return true
+        } else {
+            println("[Line 1] Type Mismatch: Cannot \"${operator}\" mismatching literal(s).")
+            return false
+        }
+
+    }
+    fun checkBothDouble(operator: Any?, left: Any?, right: Any?): Boolean {
+        if (left is Double && right is Double) {
+            return true
+        } else {
+            println("[Line 1] Type Mismatch: Cannot \"${operator}\" mismatching literal(s).")
+            return false
+        }
+    }
+    fun checkIfBoolean(left: Any?): Boolean{
+        if (left is Boolean) {
+            return true
+        } else {
+            println("[Line 1] Type Mismatch: Cannot not a non bool literal.")
+            return false
+        }
+    }
+    fun checkIfDouble(left: Any?): Boolean{
+        if (left is Double) {
+            return true
+        } else {
+            println("[Line 1] Type Mismatch: Cannot negate a non numeric literal.")
             return false
         }
     }
