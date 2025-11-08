@@ -1,3 +1,5 @@
+import kotlin.collections.contains
+
 class Parser() {
 
     // Initializing Parser Variables
@@ -25,15 +27,15 @@ class Parser() {
     // Context-Free Grammar Functions, returns a Node for the parent and left and right children
     // Checks if it follows the proper grammar order and throws and error if not
     // Expression: comparison { ( "or" | "and" ) comparison }, sends an error if the next comparisons doesn't exist
-    fun expression(): Node  {
-        var expr = comparator()
+    fun expression(): Node?  {
+        var expr: Node? = comparator()
 
-        while (enumValues<BooleanComparators>().any { it.token == currToken.type }){
+        while (ReservedWords.BOOLEANCOMPARATOR.contains(currToken.type)){
             val operator = currToken.type
             lex()
             val value = comparator()
             expr = Node(operator, expr, value)
-            if(!checker.checkVariable(expr, currToken.line,)) expr = Node(null, null, null)
+            if(!checker.checkVariable(expr, currToken.line)) expr = null
         }
        return expr
     }
@@ -42,22 +44,22 @@ class Parser() {
     // SCREEE WHTIISSSS RULEEEe
     // Sends and error if "is" was used, but did get followed up by a proper comparator
     // and if "or" was used but was not followed by "equivaling"
-    fun comparator(): Node {
-        var expr = term()
-        var operator = ""
+    fun comparator(): Node? {
+        var expr: Node? = term()
+        var operator: String
         var placeholder: String
-        val value: Node
+        val value: Node?
 
         if (currToken.type == "is") {
             lex()
-            if(!checker.checkComparator(currToken)) expr = Node(null, null, null)
-            else if (enumValues<ValueComparators>().any { it.token == currToken.type }) {
+            if(!checker.checkComparator(currToken)) expr = null
+            else if (ReservedWords.VALUECOMPARATOR.contains(currToken.type)) {
                 operator = currToken.type
                 lex()
                 if (currToken.type == "or") {
                     placeholder = " ${currToken.type}"
                     lex()
-                    if(!checker.checkComparator(currToken)) return Node(null, null, null)
+                    if(!checker.checkComparator(currToken)) return null
                     else {
                         operator += placeholder + " ${currToken.type}"
                         lex()
@@ -65,14 +67,14 @@ class Parser() {
                 }
                 value = term()
                 expr = Node(operator, expr, value)
-                if(!checker.checkVariable(expr, currToken.line,)) expr = Node(null, null, null)
+                if(!checker.checkVariable(expr, currToken.line)) expr = null
 
             } else {
                     operator = currToken.type
                     lex()
                     value = term()
                     expr = Node(operator, expr, value)
-                    if(!checker.checkVariable(expr, currToken.line,)) expr = Node(null, null, null)
+                    if(!checker.checkVariable(expr, currToken.line)) expr = null
             }
         }
         return expr
@@ -80,33 +82,33 @@ class Parser() {
 
     // Term: factor { ( "add" | "subtract"|"multiply"|"over"|"modulo") factor }
     // Sends an error when what comes after an operator does not exist
-    fun term(): Node {
-        var expr = Node(factor(), null, null)
-        while(enumValues<Operators>().any { it.token == currToken.type }){
+    fun term(): Node? {
+        var expr: Node? = Node(factor(), null, null)
+        while(ReservedWords.OPERATOR.contains(currToken.type)){
             val operator = currToken.type
             lex()
             val value = factor()
             expr = Node(operator, expr, value)
-            if(!checker.checkVariable(expr, currToken.line,)) expr = Node(null, null, null)
+            if(!checker.checkVariable(expr, currToken.line)) expr = null
         }
         return expr
     }
 
     // Factor: ( "invert" | "not" ) factor | primary
     // Sends an error when what comes after the negation does not exist
-    fun factor(): Node{
-        var expr: Node
-        if (enumValues<Unary>().any { it.token == currToken.type }) {
+    fun factor(): Node? {
+        var expr: Node?
+        if (ReservedWords.UNARY.contains(currToken.type)) {
             val operator = currToken.type
             lex()
             val value = factor()
             expr = Node(operator, value, null)
-            if(!checker.checkVariable(expr, currToken.line)) expr = Node(null, null, null)
+            if(!checker.checkVariable(expr, currToken.line)) expr = null
         } else {
             val placeholder = primary()
             expr = Node(placeholder, null, null)
             lex()
-            if(!checker.checkRedundancy(currToken)) expr = Node(null, null, null)
+            if(!checker.checkRedundancy(currToken)) expr = null
         }
         return expr
     }
@@ -116,7 +118,7 @@ class Parser() {
     fun primary(): String? {
         if (!checker.checkLiteral(currToken)) return null
         else {
-            if (enumValues<Literals>().any { it.type == currToken.type }) {
+            if (ReservedWords.LITERAL.contains(currToken.type)) {
                 return currToken.literal
             }
             return currToken.type

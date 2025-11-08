@@ -6,7 +6,7 @@ enum class ReservedWords(val token: String){
     EQUAL("equaling"),    // EQUAL("equal"),
     UNEQUAL("unlike"),
     GREATER("exceeding"),   // GREATER("greater than"),
-    LESS("below"),          // LESS("less than"),
+    LESSER("below"),          // LESS("less than"),
 
     // Boolean Comparators
     OR("or"),
@@ -50,6 +50,16 @@ enum class ReservedWords(val token: String){
     ASSIGNMENT("to"),
     ITSELF("it"),
     BOOLEAN("is");
+
+    companion object {
+        val BOOLEANCOMPARATOR = hashSetOf("or", "and")
+        val LITERALCOMPARATOR = hashSetOf("equaling", "unlike")
+        val LITERAL = hashSetOf("Numeric", "String")
+        val BOOLEANLITERAL = hashSetOf("factual", "faulty")
+        val OPERATOR = hashSetOf("plus", "minus", "times", "over", "modulo")
+        val UNARY = hashSetOf("not", "negative")
+        val VALUECOMPARATOR = hashSetOf("exceeding", "below", "exceeding or equaling", "below or equaling")
+    }
 
     // Keywords to be Decided when to/if to be implemented:
     //    INCREMENT("increment"),
