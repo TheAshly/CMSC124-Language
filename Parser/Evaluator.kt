@@ -1,9 +1,77 @@
 class Evaluator() {
+    var currentField = Field.globalField
 
-    val checker = ErrorChecker()
+    fun evaluateProgram(trees: LinkedHashSet<*>){
+        for(node in trees){
+            if(node is Node) {
+                statement(node)
+            }
+            if(node is LinkedHashSet<*>) {
+                currentField = Field(parent = currentField)
+                evaluateProgram(node)
+                currentField = currentField.getParent()
+            }
+        }
+    }
 
-    fun evaluateTree(tree: Node): Any? {
-        return expression(tree)
+    fun statement(node: Node) {
+        when(val center = node.center){
+            in ReservedWords.ASSIGNMENTS -> assigning(node)
+            ReservedWords.PRINTCALL -> printing(node)
+            else -> expression(node)
+        }
+    }
+
+    fun assigning(node: Node) {
+        val leftNode: Any? = node.left
+        var rightNode: Any? = node.right
+        when (node.center) {
+            "refers" -> {
+                if(node.right is Node)
+                    rightNode = expression(node.right)
+                if (ErrorChecker.checkAssignmentString(node.center, rightNode))
+                    currentField.declare((leftNode as String), (rightNode as String))
+            }
+            "equals" -> {
+                if(node.right is Node)
+                    rightNode = expression(node.right)
+                if (ErrorChecker.checkAssignmentDouble(node.center, rightNode))
+                    currentField.declare((leftNode as String), (rightNode as Double))
+            }
+            "correlates" -> {
+                if(node.right is Node)
+                    rightNode = expression(node.right)
+                if (ErrorChecker.checkAssignmentBoolean(node.center, rightNode))
+                    currentField.declare((leftNode as String), (rightNode as Boolean))
+            }
+        }
+    }
+
+    fun printing(node: Node) {
+        val leftNode: Any? = node.left
+        var rightNode: Any? = node.right
+
+        if(leftNode is String){
+            var printstring = leftNode as String
+            while (rightNode is Node) {
+                if (rightNode.center is String) {
+                    if (rightNode.left is String) {
+                        val resolvedValue = currentField.resolve(rightNode.left)
+                        if(ErrorChecker.checkNullPrinting(resolvedValue))
+                            printstring = printstring.replace(rightNode.center, resolvedValue.toString())
+
+                    } else if (rightNode.left is Node) {
+                        val expressedValue = expression(rightNode.left)
+                        if(ErrorChecker.checkNullPrinting(expressedValue))
+                            printstring = printstring.replace(rightNode.center, expressedValue.toString())
+                    }
+                }
+                rightNode = rightNode.right
+            }
+            println(printstring.removePrefix("\"").removeSuffix("\""))
+        }
+
+
     }
 
     fun expression(node: Node): Any?  {
@@ -16,14 +84,12 @@ class Evaluator() {
             if(node.right is Node){
                 rightNode = expression(node.right)
             }
-            if(checker.checkBothBoolean(node.center, leftNode, rightNode)) {
+            if(ErrorChecker.checkBothBoolean(node.center, leftNode, rightNode)) {
                 when (node.center) {
                     "and" -> return (leftNode as Boolean) && (rightNode as Boolean)
                     "or" -> return (leftNode as Boolean) || (rightNode as Boolean)
                 }
             }
-            return null
-
         }
         return equality(node)
 
@@ -57,7 +123,7 @@ class Evaluator() {
             if(node.right is Node){
                 rightNode = comparator(node.right)
             }
-            if(checker.checkBothDouble(node.center, leftNode, rightNode)) {
+            if(ErrorChecker.checkBothDouble(node.center, leftNode, rightNode)) {
                 when (node.center) {
                     "exceeding" -> return (leftNode as Double) > (rightNode as Double)
                     "below" -> return (leftNode as Double) < (rightNode as Double)
@@ -65,7 +131,6 @@ class Evaluator() {
                     "below or equaling" -> return (leftNode as Double) <= (rightNode as Double)
                 }
             }
-            return null
         }
         return term(node)
     }
@@ -80,7 +145,7 @@ class Evaluator() {
             if(node.right is Node){
                 rightNode = term(node.right)
             }
-            if(checker.checkBothDouble(node.center, leftNode, rightNode)) {
+            if(ErrorChecker.checkBothDouble(node.center, leftNode, rightNode)) {
                 when (node.center) {
                     "plus" -> return (leftNode as Double) + (rightNode as Double)
                     "minus" -> return (leftNode as Double) - (rightNode as Double)
@@ -89,10 +154,6 @@ class Evaluator() {
                     "modulo" -> return (leftNode as Double) % (rightNode as Double)
                 }
             }
-            return null
-        }
-        if(node.center is Node){
-            return factor(node.center)
         }
         return factor(node)
     }
@@ -100,15 +161,14 @@ class Evaluator() {
     fun factor(node: Node): Any? {
         var leftNode: Any? = node.left
         if (ReservedWords.UNARY.contains(node.center)){
-            if(node.left is Node){
+            if(node.left is Node)
                 leftNode = factor(node.left)
-            }
-            if(checker.checkIfBoolean(leftNode)){
-               if(node.center == "not") return !(leftNode as Boolean)
-            } else if(checker.checkIfDouble(leftNode)){
-                if(node.center == "negative") return -(leftNode as Double)
-            }
-            return null
+
+            return if(ErrorChecker.checkUnaryLiterals(node.center, leftNode))
+                !(leftNode as Boolean)
+            else
+                -(leftNode as Double)
+
         }
         return primary(node)
 
@@ -117,10 +177,18 @@ class Evaluator() {
     fun primary(node: Node): Any? {
         return when (val center = node.center) {
             is Node -> primary(center)
-            "factual" -> true
-            "faulty" -> false
-            is String -> center.toDoubleOrNull() ?: center
+            "true" -> true
+            "false" -> false
+            "nothing" -> Nothing()
+            is String -> {
+                center.toDoubleOrNull() ?:
+                if (center.contains('"'))
+                    center.removePrefix("\"").removeSuffix("\"")
+                else
+                    currentField.resolve(center)
+            }
             else -> center
+
         }
     }
 }

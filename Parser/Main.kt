@@ -1,3 +1,5 @@
+import java.io.File
+import java.io.FileNotFoundException
 //⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 //⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢿⣛⣿⣝⣻⣻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 //⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢯⣿⣿⣿⣿⣿⣿⣷⢽⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
@@ -44,22 +46,39 @@
 //⢿⣽⡾⣆⠱⠠⢃⢆⠀⠡⠀⢠⠓⣄⢋⡔⢡⢂⠘⢡⠎⣑⢊⡱⠰⣐⠢⣀⠉⠈⠸⣐⠶⡸⢥⡂⠈⠢⠙⠦⠉⠊⠀⠀⠀⠀⠀⡀⠄⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⢇⡚⢤⡋⡼⣿⣿⣿⣿
 //-----------------------------WATCH VIOLET EVERGARDEN-----------------------------------
 
-fun main(){
-    // Calls Scanner
-    val scanner = Scanner()
-    val parser = Parser()
-//    val printer = Printer()
-    val evaluator = Evaluator()
-    while(true) {
-        print(">")
+fun main() {
+
+    val typeScanner = Scanner()
+    val typeParser = Parser()
+    val typeEvaluator = Evaluator()
+    val typePrinter = Printer()
+
+
+//    val absolutePath = "C:\\Users\\Keith\\Downloads\\UPV\\UPV 5th Sem\\CMSC 124-3 Lab\\CMSC124-Language\\Parser\\data.txt"
+//    val fullContent: String = File(absolutePath).readText()
+
+    while (true) {
+        print("> ")
         val input = readln()
-        val tokens = scanner.scanLine(input)
-        val tree = parser.parseTokens(tokens)
-//        printer.scannerPrinter(tokens)
-//        printer.parserPrinter(tree)
-        if(tree != null){
-            println(evaluator.evaluateTree(tree))
+        val tokens = typeScanner.scanLine(input)
+            typePrinter.scannerPrinter(tokens)
+
+        val tree = typeParser.parseTokens(tokens)
+            typePrinter.parserTraverser(tree)
+        if (tree != null) {
+            typeEvaluator.evaluateProgram(tree)
         }
         System.gc()
     }
 }
+
+//> Number equals to 21.
+//> I state, "I am (age) years old today!", referring to Number.
+
+
+// Make the Error Checkers try catch and print the e.
+// Change parser to output just one node tree rather than a list of nodes.
+// Make Field be more readable
+// Eliminate null declaration, explicitly null or explicitly something
+// Change string string
+// Make file read more dynamic to any text file

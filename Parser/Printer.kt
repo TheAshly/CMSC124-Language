@@ -8,6 +8,19 @@ class Printer {
     }
     
     // For printing of the Abstract Syntax Tree
+    fun parserTraverser(set: LinkedHashSet<*>?){
+        if(set != null)
+            for(node in set){
+                if(node is Node) {
+                    parserPrinter(node)
+                }
+                if(node is LinkedHashSet<*>) {
+                    parserTraverser(node)
+                }
+                println()
+            }
+    }
+
     fun parserPrinter(node: Node?){
         if(node != null){
             if(null !in setOf(node.left, node.right)){
@@ -21,10 +34,16 @@ class Printer {
             if(node.left is Node){
                 print(" ")
                 parserPrinter(node.left)
+            } else if(node.left is String){
+                print(" ")
+                print(node.left)
             }
             if(node.right is Node){
                 print(" ")
                 parserPrinter(node.right)
+            } else if(node.right is String){
+                print(" ")
+                print(node.right)
             }
             if(null !in setOf(node.left, node.right)){
                 print(")")
