@@ -1,3 +1,5 @@
+import kotlin.text.toDoubleOrNull
+
 class Node(val center: Any?, val left: Any?, val right: Any?){
 
     // Checks the Leaf of the current node and recurses until it sees a literal/null value

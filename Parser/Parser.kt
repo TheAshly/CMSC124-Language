@@ -1,41 +1,177 @@
-import kotlin.collections.contains
+import ReservedWords
 
 class Parser() {
 
     // Initializing Parser Variables
     var listIterator = mutableListOf<Token>().listIterator()
     var currToken: Token = Token("Placeholder", "Placeholder", null, 1)
-    val checker = ErrorChecker()
+    var currLineNum: Int = 0
+    var indentLevel: Int = 0
 
     // Gets the next token in the iterable list of tokens
     fun lex(){
         if(listIterator.hasNext()) {
             currToken = listIterator.next()
+            if(ErrorChecker.checkContainsSpaces(currToken)){
+                currToken = listIterator.next()
+                ErrorChecker.checkSpaces(currToken)
+            }
         }
     }
 
     // Parses the token list taken from the scanner
-    fun parseTokens(tokens: MutableList<Token>): Node? {
-        this.listIterator = tokens.listIterator()   // Initializes the Token List to be iterated
-        this.currToken = listIterator.next()        // Initializes the first token of the list
+    fun parseTokens(tokens: MutableList<Token>): LinkedHashSet<Any>? {
 
-        // If the first token is already the end of line there was no expression, meaning an Error
-        if(checker.checkEmptiness(currToken)) return null
-        return expression()
+        this.listIterator = tokens.listIterator()
+        this.currToken = listIterator.next()
+
+        // If the first token is already the end of line there was no expression
+        if(ErrorChecker.checkEmptiness(currToken)) return null
+        return program()
+    }
+
+    fun program(): LinkedHashSet<Any>  {
+        currLineNum = currToken.line
+        val nodeLinkedHashSet = LinkedHashSet<Any>()
+        nodeLinkedHashSet.add(statement())
+
+        while (currLineNum != currToken.line){
+            currLineNum = currToken.line
+            nodeLinkedHashSet.add(statement())
+        }
+        return nodeLinkedHashSet
+    }
+
+    fun statement(): Any  {
+        var stmt: Any
+
+        when(currToken.type){
+            ReservedWords.IDENTIFIER -> {
+                stmt = assigningStmt()
+                ErrorChecker.checkEndingPeriod(currToken)
+                lex()
+            }
+            ReservedWords.PRINT -> {
+                stmt = printingStmt()
+                ErrorChecker.checkEndingPeriod(currToken)
+                lex()
+            }
+            else ->
+                if(currToken.type == "indent") {
+                    stmt = blockStmt()
+                }
+                else {
+                    stmt = expression()
+                    ErrorChecker.checkEndingPeriod(currToken)
+                    lex()
+                }
+        }
+        return stmt
+    }
+
+    fun assigningStmt(): Node {
+        var stmt: Node
+        val identifier = currToken.lexeme
+        lex()
+
+        ErrorChecker.checkSuccessiveKeywords(currToken, ReservedWords.ASSIGNMENTS)
+        val assigning = currToken.type
+        lex()
+
+        ErrorChecker.checkSuccessiveKeyword(currToken, ReservedWords.ASSIGNING)
+        lex()
+        stmt = Node(assigning, identifier, expression())
+
+        return stmt
+    }
+
+    fun printingStmt(): Node {
+        var stmt: Node
+        var print = currToken.type
+        lex()
+
+        ErrorChecker.checkSuccessiveKeyword(currToken, ReservedWords.STRINGHANDLER)
+        print += " ${currToken.type}"
+        lex()
+
+        ErrorChecker.checkSuccessiveSymbol(currToken, Character.COMMA)
+        lex()
+
+        ErrorChecker.checkSuccessiveLiteral(currToken, ReservedWords.STRING)
+        val string = currToken.literal
+        lex()
+
+        stmt = Node(print, string, null)
+
+        val references = mutableListOf<Token>()
+        var referenceNum = 0
+        while(currToken.type == ReservedWords.POINTER){
+            references.add(currToken)
+            lex()
+            referenceNum++
+        }
+        if(referenceNum > 0){
+            ErrorChecker.checkSuccessiveSymbol(currToken, Character.COMMA)
+            lex()
+            ErrorChecker.checkSuccessiveKeyword(currToken, ReservedWords.REFERENCING)
+            lex()
+            ErrorChecker.checkSuccessiveKeyword(currToken, ReservedWords.ASSIGNING)
+            lex()
+            val pointers = mutableListOf<Token>()
+            while(currToken.type == ReservedWords.IDENTIFIER) {
+                referenceNum--
+                ErrorChecker.checkPointersExceedingCount(currToken.line, referenceNum)
+                pointers.add(currToken)
+                lex()
+                if(ErrorChecker.checkPointerCommas(currToken, referenceNum)) lex()
+            }
+            ErrorChecker.checkPointersLackingCount(currToken.line, referenceNum)
+            var refNode: Node? = null
+            for (i in references.lastIndex downTo 0){
+                refNode = Node(references[i].lexeme, pointers[i].lexeme, refNode)
+            }
+            stmt = Node(print, string, refNode)
+        }
+        return stmt
+    }
+
+    fun blockStmt(): LinkedHashSet<Any>  {
+        while(currToken.type == "indent") {
+            this.indentLevel++
+            lex()
+        }
+        currLineNum = currToken.line
+        val subNodeLinkedHashSet = LinkedHashSet<Any>()
+        subNodeLinkedHashSet.add(statement())
+
+        var indentCounter: Int = 0
+        while (currLineNum != currToken.line){
+            indentCounter = 0
+            while(currToken.type == "indent") {
+                indentCounter++
+                lex()
+            }
+            if(indentCounter < this.indentLevel) break
+            currLineNum = currToken.line
+            subNodeLinkedHashSet.add(statement())
+
+        }
+        this.indentLevel = indentCounter
+        return subNodeLinkedHashSet
     }
 
     // Context-Free Grammar Functions, returns a Node for the parent and left and right children
     // Checks if it follows the proper grammar order and throws and error if not
     // Expression: comparison { ( "or" | "and" ) comparison }, sends an error if the next comparisons doesn't exist
-    fun expression(): Node?  {
-        var expr: Node? = comparator()
+    fun expression(): Node  {
+        var expr: Node = comparator()
 
+        ErrorChecker.checkWrongKeyword(currToken.line, currToken.type)
         while (ReservedWords.BOOLEANCOMPARATOR.contains(currToken.type)){
             val operator = currToken.type
             lex()
-            val value = comparator()
-            expr = Node(operator, expr, value)
-            if(!checker.checkVariable(expr, currToken.line)) expr = null
+            expr = Node(operator, expr, comparator())
+            ErrorChecker.checkVariable(expr, currToken.line)
         }
        return expr
     }
@@ -44,37 +180,31 @@ class Parser() {
     // SCREEE WHTIISSSS RULEEEe
     // Sends and error if "is" was used, but did get followed up by a proper comparator
     // and if "or" was used but was not followed by "equivaling"
-    fun comparator(): Node? {
-        var expr: Node? = term()
+    fun comparator(): Node {
+        var expr: Node = term()
         var operator: String
-        var placeholder: String
-        val value: Node?
 
         if (currToken.type == "is") {
             lex()
-            if(!checker.checkComparator(currToken)) expr = null
-            else if (ReservedWords.VALUECOMPARATOR.contains(currToken.type)) {
+            ErrorChecker.checkComparator(currToken)
+            if (ReservedWords.VALUECOMPARATOR.contains(currToken.type)) {
                 operator = currToken.type
                 lex()
                 if (currToken.type == "or") {
-                    placeholder = " ${currToken.type}"
+                    operator += " ${currToken.type}"
                     lex()
-                    if(!checker.checkComparator(currToken)) return null
-                    else {
-                        operator += placeholder + " ${currToken.type}"
-                        lex()
-                    }
+                    ErrorChecker.checkComparator(currToken)
+                    operator += " ${currToken.type}"
+                    lex()
                 }
-                value = term()
-                expr = Node(operator, expr, value)
-                if(!checker.checkVariable(expr, currToken.line)) expr = null
+                expr = Node(operator, expr, term())
+                ErrorChecker.checkVariable(expr, currToken.line)
 
             } else {
                     operator = currToken.type
                     lex()
-                    value = term()
-                    expr = Node(operator, expr, value)
-                    if(!checker.checkVariable(expr, currToken.line)) expr = null
+                    expr = Node(operator, expr, term())
+                    ErrorChecker.checkVariable(expr, currToken.line)
             }
         }
         return expr
@@ -82,33 +212,30 @@ class Parser() {
 
     // Term: factor { ( "add" | "subtract"|"multiply"|"over"|"modulo") factor }
     // Sends an error when what comes after an operator does not exist
-    fun term(): Node? {
-        var expr: Node? = Node(factor(), null, null)
+    fun term(): Node {
+        var expr: Node = factor()
         while(ReservedWords.OPERATOR.contains(currToken.type)){
             val operator = currToken.type
             lex()
-            val value = factor()
-            expr = Node(operator, expr, value)
-            if(!checker.checkVariable(expr, currToken.line)) expr = null
+            expr = Node(operator, expr, factor())
+            ErrorChecker.checkVariable(expr, currToken.line)
         }
         return expr
     }
 
     // Factor: ( "invert" | "not" ) factor | primary
     // Sends an error when what comes after the negation does not exist
-    fun factor(): Node? {
-        var expr: Node?
+    fun factor(): Node {
+        var expr: Node
         if (ReservedWords.UNARY.contains(currToken.type)) {
             val operator = currToken.type
             lex()
-            val value = factor()
-            expr = Node(operator, value, null)
-            if(!checker.checkVariable(expr, currToken.line)) expr = null
+            expr = Node(operator, factor(), null)
+            ErrorChecker.checkVariable(expr, currToken.line)
         } else {
-            val placeholder = primary()
-            expr = Node(placeholder, null, null)
+            expr = Node(primary(), null, null)
             lex()
-            if(!checker.checkRedundancy(currToken)) expr = null
+            ErrorChecker.checkRedeclaration(currToken)
         }
         return expr
     }
@@ -116,19 +243,18 @@ class Parser() {
     // Primary: NUMBER | STRING | "factual" | "faulty" | "empty" | IDENTIFIER
     // Sends an error when the token being parsed is not a Literal
     fun primary(): String? {
-        if (!checker.checkLiteral(currToken)) return null
-        else {
-            if (ReservedWords.LITERAL.contains(currToken.type)) {
-                return currToken.literal
-            }
-            return currToken.type
+        return if (ErrorChecker.checkLiteral(currToken)){
+            if(currToken.type == ReservedWords.IDENTIFIER)
+                currToken.lexeme
+            else
+                currToken.literal
         }
+        else
+            null
     }
 }
 
-// Errors:
+// Parser.Errors:
 // Margin error: Indention level is wrong (mainly on loops and if)
-// Capitalization Error: Capitalizing Word that shouldn't be and vice versa
-// Wrong Spelling: Wrong lexeme for token
 // Grammar Error: The tokens are not being given properly
 

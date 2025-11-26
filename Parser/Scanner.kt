@@ -1,16 +1,13 @@
-import kotlin.enums.enumEntries
+import kotlin.collections.mutableListOf
 
 class Scanner {
 
     // Initializing Scanner Variables
-    var head: Int = 0       // Index in String
-    var lexeme: String = "" // Word to be Checked
-    var line: String = ""   // Line to be Checked
-    var lineNum: Int = 1    // Line Number of Code
+    var head: Int = 0
+    var lexeme: String = ""
+    var line: String = ""
+    var lineNum: Int = 1
 
-    // Creates a mutable list of tokens, which will be stored again in another array to separate lines
-    // but right now is not being used so commented
-    // var tokenList = mutableListOf<MutableList<Token>>()
     var tokens = mutableListOf<Token>()
 
     // To make sure that the first word can start either with either Upper or Lower Case
@@ -63,61 +60,86 @@ class Scanner {
 
     // Checks the Shortest Edit Path to the current word with each keyword and
     // returns the keyword with the least amount of edit
-    fun checkReservedWord(word: String): String{
-        var editdistance: Int? = null
+    fun checkReservedWord(word: String): Pair<String, Int>{
+        var editdistance = Int.MAX_VALUE
         var reservedword = ""
-        for (reserved in enumEntries<ReservedWords>()) {
-            val placeholder = countEditDistance(word, reserved.token)
-            if(editdistance == null){
+        for (reserved in ReservedWords.KEYWORDS) {
+            val placeholder = countEditDistance(word, reserved)
+            if(editdistance > placeholder){
                 editdistance = placeholder
-                reservedword = reserved.token
-            } else if(editdistance > placeholder){
-                editdistance = placeholder
-                reservedword = reserved.token
+                reservedword = reserved
             }
         }
-        return reservedword
+        return Pair(reservedword, editdistance)
     }
 
     // Checks the code line by line
     fun scanLine(line: String): MutableList<Token> {
-        this.head = 0                   // Initialized the index to start of the line string
-        this.line = line                // Variable Line initialized to the line String
-        this.lineNum = 1                // Temp Line variable, as we're not changing lines
-        this.tokens = mutableListOf()   // Initialized a new mutable Token list
+        this.head = 0
+        this.line = line
+        this.tokens = mutableListOf()
 
-        this.firstword = true           // Initialized to signify we're at the first word again
+        this.firstword = true
 
         // Checks the first symbol in the word and scans accordingly based on it
         while (true) {
             val char = checkChar()
-            if (char in Character.UPPERCASE || char in Character.LOWERCASE) {
+            if (char in Character.UPPERCASE || char in Character.LOWERCASE){
                 scanLexeme()
-            } else if (char in Character.NUMBER) {
-                scanNumber()
-            } else if (char == Character.STATEMENT) {
-                head++ // Does not include the first (") in the lexeme
-                scanStatement()
-            } else if (char == Character.COMMENT || char == null) {
-                tokens.add(Token("end", "EOF", null, lineNum))
-                break
-            } else if (char == Character.PERIOD) {
-                //  println("Token: Type=EOL, Lexeme=\".\", Literal=null, Line=1")
-                tokens.add(Token("end", "EOF", null, lineNum))
-                break
-            } else if (char == Character.SPACE) {
-                head++
-                continue
-            }else {
-                println("[Line $lineNum] Typesetting Error: Character/Symbol not found in the alphabet.")
-                break
+                firstword = false
             }
-            System.gc()
-            firstword = false
+            else if (char in Character.NUMBER){
+                scanNumber()
+                firstword = false
+            }
+            else if (char == Character.STATEMENT){
+                scanStatement()
+                firstword = false
+            }
+            else if (char == Character.INDENT){
+                tokens.add(Token("indent", "\t", null, lineNum))
+                head++
+            }
+            else if (char == Character.SPACE){
+                tokens.add(Token("space", " ", null, lineNum))
+                head++
+            }
+            else if (char == Character.COMMA){
+                tokens.add(Token("comma", ",", null, lineNum))
+                head++
+            }
+            else if (char == Character.PERIOD){
+                tokens.add(Token("period", ".", null, lineNum))
+                head++
+                firstword = true
+            }
+            else if (char == Character.COMMENT || Character.NEWLINE.contains(char)){
+                if (Character.NEWLINE.contains(char)) {
+                    if(char == '\n')
+                        lineNum++
+                    head++
+                } else {
+                    do {
+                        val comment = checkChar()
+                        head++
+                    }while(!Character.NEWLINE.contains(comment))
+
+                }
+            }
+            else {
+                if (ErrorChecker.checkCharNull(char, lineNum)){
+                    tokens.add(Token("EOF", "", null, lineNum))
+                    lineNum++
+                    break
+                }
+
+            }
+
             this.lexeme = ""
+
+            System.gc()
         }
 
-        // Returns Token list to main to parse
         return tokens
     }
 
@@ -126,12 +148,11 @@ class Scanner {
         val index = head        // Saves the index of the first letter of the word
         var identifier = false  // Initializing Checker if it's an Identifier
         var word = true         // Initializing Checker if it follows Proper Word Format (No Symbol or Numbers)
+
         do {
             // Checks next character until it hits end of line or a whitespace
             val char: Char? = checkChar()
 
-            // Checks if it is an identifier with a Titlecase format or
-            // if it has any symbols showing it doesn't follow proper word format
             if(char !in Character.LOWERCASE){
                 if(char in Character.UPPERCASE){
                     if(index==head){
@@ -145,37 +166,26 @@ class Scanner {
                 }
             }
 
-            // Adds character to the current lexeme and iterates to the next character
             lexeme += char
             head++
         } while(checkChar() !in hashSetOf(Character.PERIOD, Character.COMMA, Character.COMMENT, Character.SPACE,null))
 
         // If it followed proper word format it goes here otherwise it adds an error Token
-        if(word){
-
+        if(ErrorChecker.checkLexemeStructure(word, lineNum)){
             // Runs the checker to what Reserved word is most similar to the current word
-            val reservedWord: String = checkReservedWord(lexeme)
+            val reservedWord: Pair<String, Int> = checkReservedWord(lexeme)
 
             // First checks its equal to the Keyword, otherwise checks if at least its similar, if also not applicable
-            // checks if it can be an identifier, if not then pushes an Error Token
-            if(lexeme.equals(reservedWord, ignoreCase = true)){
-                // firstword is used here to be lenient when the word's a reserved but Titlecase
-                if(firstword || lexeme == reservedWord) {
-                    tokens.add(Token(reservedWord, lexeme, null, lineNum))
-                } else {
-                    tokens.add(Token("[Line $lineNum] Capitalization Exception: Did you mean $reservedWord?", lexeme, null, lineNum))
+            if(ErrorChecker.checkLexemeCapitalization(firstword, lexeme, reservedWord.first, reservedWord.second, lineNum))
+                when(lexeme){
+                    "factual" -> tokens.add(Token("Preposition", lexeme, "true", lineNum))
+                    "faulty" -> tokens.add(Token("Preposition", lexeme, "false", lineNum))
+                    "nothing" -> tokens.add(Token("Null", lexeme, "nothing", lineNum))
+                    else -> tokens.add(Token(reservedWord.first, lexeme, null, lineNum))
                 }
-            } else if(countEditDistance(lexeme, reservedWord) <= reservedWord.length.floorDiv(2)) {
-                    tokens.add(Token("[Line $lineNum] Spelling Exception: Did you mean $reservedWord?", lexeme, null, lineNum))
-            }  else {
-                if(identifier){
+            else
+                if(ErrorChecker.checkKeywordExistence(identifier, lineNum))
                     tokens.add(Token("Identifier", lexeme, null, lineNum))
-                } else {
-                    tokens.add(Token("[Line $lineNum] Formatting Error: Reserved Keyword not found in dictionary.", lexeme, null, lineNum))
-                }
-            }
-        } else{
-            tokens.add(Token("[Line $lineNum] Typesetting Error: String doesn't follow proper word structure.", lexeme, null, lineNum))
         }
     }
 
@@ -193,6 +203,13 @@ class Scanner {
                 if(num == Character.DECIMAL){
                     if(!decimal){
                         decimal = true
+                        head++
+                        if(checkChar() !in Character.NUMBER){
+                            head--
+                            break
+                        }
+                        else
+                            head--
                     } else {
                         break
                     }
@@ -201,24 +218,26 @@ class Scanner {
                 }
             }
 
-            // Adds character to the current lexeme and iterates to the next character
             lexeme += num
             head++
+
         } while (checkChar() !in hashSetOf(Character.COMMA, Character.COMMENT, Character.SPACE, null))
 
         // If it followed Proper Numeric Format it goes here otherwise it adds an Error Token
-        if (checker){
+        if (ErrorChecker.checkNumberStructure(checker, lineNum))
             tokens.add(Token("Numeric", lexeme, lexeme, lineNum))
-        } else {
-            tokens.add(Token("[Line $lineNum] Numeric Error: Not a proper number.", lexeme, null, lineNum))
-        }
     }
 
     // Check if it's a statement (A long String)
     fun scanStatement() {
         var endQuote = false // Initializing Checker for the ending quotation (")
-        var ended = false    // Initializing Checker for making sure they end the Statement properly
         var checker = true   // Initializing Checker to see if they did end the statement
+        var referencing = false
+        var reference = ""
+        val placeholder = mutableListOf<Token>()
+
+        head++
+
         do {
             // Checks next character until it hits end of line or a whitespace
             val char: Char? = checkChar()
@@ -228,26 +247,34 @@ class Scanner {
             if(char == Character.STATEMENT){
                 if(!endQuote){
                     endQuote = true
-                    ended = true
                     head++
                     continue
                 }
+            } else if(char == Character.OPENREF){
+                referencing = true
+            } else if(char == Character.CLOSEREF){
+                referencing = false
+                reference += char
+                placeholder.add(Token("Reference", reference, null, lineNum))
+                reference = ""
             }
 
-            // Adds character to the current lexeme and iterates to the next character
+            if (referencing) reference += char
             lexeme += char
             head++
 
             // Checks if the there is still a character after the ending quotation
-            if(ended) checker = false
-        } while(!ended || checkChar() !in hashSetOf(Character.PERIOD, Character.COMMA, Character.COMMENT,  Character.SPACE, null))
+            if(endQuote) checker = false
+        } while(!endQuote || checkChar() !in hashSetOf(Character.PERIOD, Character.COMMA, Character.COMMENT,  Character.SPACE, null))
 
         // If the statement ended properly it goes here otherwise it pushes an error token
-        if (checker){
-            tokens.add(Token("String", "\"$lexeme\"", lexeme, lineNum))
-        } else {
-            tokens.add(Token("[Line $lineNum] Statement Error: Did not properly end the statement.", lexeme, null, lineNum))
+        if (ErrorChecker.checkSentenceStructure(checker, lineNum))
+            tokens.add(Token("Sentence", "\"$lexeme\"", "\"$lexeme\"", lineNum))
+
+        for(reference in placeholder){
+            tokens.add(reference)
         }
+
     }
 }
 
