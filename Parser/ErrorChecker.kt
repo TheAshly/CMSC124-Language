@@ -3,46 +3,77 @@ class ErrorChecker {
     companion object {
         // Scanner Error Checkers
         fun checkCharNull(symbol: Char?, line: Int): Boolean {
-            if (symbol != null) throw TokenScanningException(line)
-            return true
+            try {
+                if (symbol != null) throw TokenScanningException(line)
+                return true
+            } catch (e: TokenScanningException){
+                println(e)
+                return false
+            }
         }
 
         fun checkSentenceStructure(checker: Boolean, line: Int): Boolean {
-            if (!checker)
-                throw EndingSentenceException(line)
-            return true
+            try {
+                if (!checker)
+                    throw EndingSentenceException(line)
+                return true
+            } catch (e: EndingSentenceException){
+                println(e)
+                return false
+            }
         }
 
         fun checkNumberStructure(checker: Boolean, line: Int): Boolean {
-            if (!checker)
-                throw NumericalStructureException(line)
-            return true
+            try {
+                if (!checker)
+                    throw NumericalStructureException(line)
+                return true
+            } catch (e: NumericalStructureException){
+                println(e)
+                return false
+            }
         }
 
         fun checkLexemeStructure(checker: Boolean, line: Int): Boolean {
-            if (!checker)
-                throw LexemeStructureException(line)
-            return true
+            try {
+                if (!checker)
+                    throw LexemeStructureException(line)
+                return true
+            } catch (e: LexemeStructureException){
+                println(e)
+                return false
+            }
         }
 
         fun checkLexemeCapitalization(leniency: Boolean, lexeme: String, keyword: String, edit: Int, line: Int): Boolean {
-            if(lexeme.equals(keyword, ignoreCase = true)){
-                if(leniency || lexeme == keyword)
-                    return true
-                else
-                    throw LexemeCapitalizationException(keyword, line)
+            try {
+                if(lexeme.equals(keyword, ignoreCase = true)){
+                    if(leniency || lexeme == keyword)
+                        return true
+                    else
+                        throw LexemeCapitalizationException(keyword, line)
+                }
+            } catch (e: LexemeCapitalizationException){
+                println(e)
             }
             // if(edit <= keyword.length.floorDiv(2))
-            if(edit <= 2)
-                throw LexemeSpellingException(keyword, line)
-            else
-                return false
-
+            try {
+                if(edit <= 2)
+                    throw LexemeSpellingException(keyword, line)
+            } catch (e: LexemeSpellingException){
+                println(e)
+            }
+            return false
         }
 
         fun checkKeywordExistence(checker: Boolean, line: Int): Boolean {
-            if (!checker) throw UnknownKeywordException(line)
-            return true
+            try {
+                if (!checker) throw UnknownKeywordException(line)
+                return true
+            } catch (e: UnknownKeywordException){
+                println(e)
+                return false
+            }
         }
 
 
@@ -52,10 +83,15 @@ class ErrorChecker {
         }
 
         fun checkLiteral(token: Token): Boolean {
-            if (ReservedWords.LITERAL.contains(token.type) || token.type == ReservedWords.IDENTIFIER)
-                return true
-            else
-                throw UnknownLiteralException(token.lexeme, token.line)
+            try {
+                if (ReservedWords.LITERAL.contains(token.type) || token.type == ReservedWords.IDENTIFIER)
+                    return true
+                else
+                    throw UnknownLiteralException(token.lexeme, token.line)
+            } catch (e: UnknownLiteralException){
+                println(e)
+                return false
+            }
         }
 
         fun checkSpaces(token: Token) {
@@ -108,9 +144,14 @@ class ErrorChecker {
         }
 
         fun checkSuccessiveLiteral(token: Token, type: String): Boolean {
-            if (token.type != type)
-                throw WrongSuccessiveLiteralException(token.line)
-            return true
+            try {
+                if (token.type != type)
+                    throw WrongSuccessiveLiteralException(token.line)
+                return true
+            } catch (e: WrongSuccessiveLiteralException){
+                println(e)
+                return false
+            }
         }
 
         fun checkWrongKeyword(line: Int, keyword: String) {
@@ -148,39 +189,69 @@ class ErrorChecker {
                 throw WrongUnaryLiteralException(operator)
         }
         fun checkBothBoolean(operator: Any?, left: Any?, right: Any?): Boolean {
-            if (left is Boolean && right is Boolean)
-                return true
-            throw MismatchingLiteralsException(operator)
+            try {
+                if (left is Boolean && right is Boolean)
+                    return true
+                throw MismatchingLiteralsException(operator)
+            } catch (e: MismatchingLiteralsException){
+                println(e)
+                return false
+            }
         }
 
         fun checkBothDouble(operator: Any?, left: Any?, right: Any?): Boolean {
-            if (left is Double && right is Double)
-                return true
-            throw MismatchingLiteralsException(operator)
+            try {
+                if (left is Double && right is Double)
+                    return true
+                throw MismatchingLiteralsException(operator)
+            } catch (e: MismatchingLiteralsException){
+                println(e)
+                return false
+            }
         }
 
         fun checkAssignmentDouble(operator: Any?, value: Any?): Boolean {
-            if (value is Double || value == null)
-                return true
-            throw MismatchingAssignmentException(operator)
+            try {
+                if (value is Double || value == null)
+                    return true
+                throw MismatchingAssignmentException(operator)
+            } catch (e: MismatchingAssignmentException){
+                println(e)
+                return false
+            }
         }
 
         fun checkAssignmentString(operator: Any?, value: Any?): Boolean {
-            if (value is String || value == null)
-                return true
-            throw MismatchingAssignmentException(operator)
+            try {
+                if (value is String || value == null)
+                    return true
+                throw MismatchingAssignmentException(operator)
+            } catch (e: MismatchingAssignmentException){
+                println(e)
+                return false
+            }
         }
 
         fun checkAssignmentBoolean(operator: Any?, value: Any?): Boolean {
-            if (value is Boolean || value == null)
-                return true
-            throw MismatchingAssignmentException(operator)
+            try {
+                if (value is Boolean || value == null)
+                    return true
+                throw MismatchingAssignmentException(operator)
+            } catch (e: MismatchingAssignmentException){
+                println(e)
+                return false
+            }
         }
 
         fun checkNullPrinting(value: Any?): Boolean {
-            if (value == null)
-                throw NullPointerException()
-            return true
+            try {
+                if (value == null)
+                    throw NullPointerException()
+                return true
+            } catch (e: NullPointerException){
+                println(e)
+                return false
+            }
         }
     }
 }
