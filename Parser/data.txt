@@ -1,4 +1,0 @@
-Number equals to 21.
-	Number equals to 20.
-	I state, "I am (age) years old today!", referring to Number.
-I state, "I am (age) years old today!", referring to Number.
