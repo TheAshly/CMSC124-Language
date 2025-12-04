@@ -3,9 +3,9 @@
 ## Creator
 [Your name]
 
-Keith Ashly M. Domingo\
-John Clyde C. Aparicio\
-Rene Andre B. Jocsing
+Keith Ashly M. Domingo (TheAshly)\
+John Clyde C. Aparicio (Cl4-Bisk)\
+Rene Andre B. Jocsing (WhiteLicorice)
 
 ## Language Overview
 [Provide a brief description of your programming language - what it's designed for, its main characteristics]
