@@ -2,6 +2,7 @@ package typeWriter.interpreter
 
 import typeWriter.interpreter.constructors.Node
 import typeWriter.interpreter.constructors.Token
+import typeWriter.interpreter.exceptions.WrongSuccessiveSymbolException
 import typeWriter.interpreter.keywords.Character
 import typeWriter.interpreter.keywords.ReservedWords
 
@@ -39,7 +40,7 @@ class Parser() {
         return program()
     }
 
-    fun program(): Node {
+    fun program(): Node? {
         currLineNum = currToken.line
         var programNode = statement()
         while (currLineNum != currToken.line){
@@ -53,7 +54,6 @@ class Parser() {
         var stmt: Node
         when(currToken.type){
             ReservedWords.Companion.IDENTIFIER -> {
-
                 stmt = assigningStmt()
                 ErrorChecker.checkEndingPeriod(currToken)
                 lex()
@@ -68,6 +68,20 @@ class Parser() {
             }
             in ReservedWords.Companion.LOOPSTMT -> {
                 stmt = loopStmt()
+            }
+            ReservedWords.Companion.FUNCTION -> {
+                stmt = functionStmt()
+            }
+            ReservedWords.Companion.RETURN -> {
+                stmt = returnStmt()
+                ErrorChecker.checkEndingPeriod(currToken)
+                lex()
+
+            }
+            ReservedWords.Companion.CALLFUNC -> {
+                stmt = callStmt()
+                ErrorChecker.checkEndingPeriod(currToken)
+                lex()
             }
             else -> {
                     stmt = expression()
@@ -89,8 +103,12 @@ class Parser() {
 
         ErrorChecker.checkSuccessiveKeyword(currToken, ReservedWords.Companion.ASSIGNING)
         lex()
-
-        stmt = Node(assigning, identifier, expression())
+        if(assigning == "pertains"){
+            stmt = Node(assigning, identifier, callStmt())
+        }
+        else{
+            stmt = Node(assigning, identifier, expression())
+        }
         return stmt
     }
 
@@ -196,20 +214,107 @@ class Parser() {
     }
 
     fun forCondition(): Node {
-        var leftexpr = expression()
         var operator: String
-        if(currToken.type == ReservedWords.Companion.RANGEUP)
+        if(currToken.type == ReservedWords.Companion.LETTERCOUNT){
             operator = currToken.type
-        else {
-            ErrorChecker.checkSuccessiveKeyword(currToken, ReservedWords.Companion.RANGEDOWN)
-            operator = currToken.type
+            lex()
+            ErrorChecker.checkSuccessiveKeyword(currToken, ReservedWords.Companion.RANGE)
+            lex()
+            return Node(operator, expression(), null)
+        } else{
+            var leftexpr = expression()
+            if(currToken.type == ReservedWords.Companion.RANGEUP)
+                operator = currToken.type
+            else {
+                ErrorChecker.checkSuccessiveKeyword(currToken, ReservedWords.Companion.RANGEDOWN)
+                operator = currToken.type
+            }
+            lex()
+            ErrorChecker.checkSuccessiveKeyword(currToken, ReservedWords.Companion.ASSIGNING)
+            lex()
+            return Node(operator, leftexpr, expression())
         }
-        lex()
-        ErrorChecker.checkSuccessiveKeyword(currToken, ReservedWords.Companion.ASSIGNING)
-        lex()
-        return Node(operator, leftexpr, expression())
     }
 
+    fun functionStmt(): Node {
+        var block: Node
+        lex()
+        ErrorChecker.checkProperIdentifier(currToken)
+        val functionName = currToken.lexeme
+        ErrorChecker.checkFunctionRedeclaration(functions.get(functionName))
+        lex()
+        if(currToken.type == "colon"){
+            lex()
+            val state = "parametered"
+            val parameters = parameters()
+            block = Node(state,blockStmt(), parameters)
+        } else {
+            ErrorChecker.checkEndingComma(currToken)
+            lex()
+            block = Node(null, blockStmt(), null)
+        }
+
+        functions[functionName] = block
+        return Node(null, null, null)
+
+    }
+    fun parameters(): Node? {
+        if(currToken.type == ReservedWords.Companion.IDENTIFIER){
+            val identifier = currToken.lexeme
+            lex()
+            ErrorChecker.checkSuccessiveSymbol(currToken, Character.Companion.COMMA)
+            lex()
+            return Node(parameters(), identifier, null)
+        } else
+            return null
+    }
+
+    fun callStmt(): Node {
+        var block: Node
+
+        val operator = currToken.type
+        lex()
+        ErrorChecker.checkProperIdentifier(currToken)
+        val functionName = currToken.lexeme
+        lex()
+
+        if(currToken.type == "colon"){
+            val declarations = declarations()
+            block = Node(operator,functionName , declarations)
+        } else {
+            block = Node(operator, functionName, null)
+        }
+        return block
+
+    }
+    fun declarations(): Node? {
+        if(currToken.type == "colon"){
+            lex()
+        } else if(currToken.type == "period"){
+            return null
+        }
+        else {
+            ErrorChecker.checkSuccessiveSymbol(currToken, Character.Companion.COMMA)
+            lex()
+        }
+        if(currToken.type == ReservedWords.Companion.IDENTIFIER){
+            val literal = currToken.literal
+            lex()
+            return Node(declarations(), literal, null)
+        } else{
+            val identifier = expression()
+            return Node(declarations(), identifier, null)
+        }
+    }
+    fun returnStmt(): Node {
+        val operator = currToken.type
+        lex()
+        ErrorChecker.checkSuccessiveSymbol(currToken, Character.Companion.COMMA)
+        lex()
+        val identifier = currToken.lexeme
+        lex()
+        return Node(operator, identifier, null)
+    }
     fun blockStmt(): Node {
         var subNode: Node
         this.indentLevel += 1

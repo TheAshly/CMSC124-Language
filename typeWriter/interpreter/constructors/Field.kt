@@ -12,10 +12,10 @@ class Field(private val parent: Field? = null) {
     }
 
     fun initialize(identifier: String, type: Any?) {
-        val updated = updateAncestor(identifier, type)
-        if (!updated) {
+//        val updated = updateAncestor(identifier, type)
+//        if (!updated) {
             declarations[identifier] = type
-        }
+//        }
     }
     fun retrieve(identifier: String): Any? {
         return declarations.get(identifier) ?: parent?.retrieve(identifier)

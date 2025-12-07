@@ -30,6 +30,8 @@ import typeWriter.interpreter.exceptions.ExceedingIndentException
 import typeWriter.interpreter.exceptions.MissingCommaException
 import typeWriter.interpreter.exceptions.NonBoolExpressionException
 import typeWriter.interpreter.exceptions.LackingIndentException
+import typeWriter.interpreter.exceptions.NonStringExpressionException
+import typeWriter.interpreter.exceptions.InvalidStringOperationException
 
 import typeWriter.interpreter.keywords.Character
 import typeWriter.interpreter.keywords.ReservedWords
@@ -294,6 +296,22 @@ class ErrorChecker {
                 println(e)
             }
         }
+        fun checkProperIdentifier(token: Token) {
+            try {
+                if (token.type != ReservedWords.Companion.IDENTIFIER)
+                    throw Exception()
+            } catch (e: Exception){
+                println("checkProperIdentifier")
+            }
+        }
+        fun checkFunctionRedeclaration(node: Node?) {
+            try {
+                if (node != null)
+                    throw Exception()
+            } catch (e: Exception){
+                println("checkFunctionRedeclaration")
+            }
+        }
 
         // Evaluator Error Checkers
         fun checkUnaryLiteralsBool(operator: Any?, left: Any?): Boolean {
@@ -325,17 +343,6 @@ class ErrorChecker {
         fun checkBothBoolean(operator: Any?, left: Any?, right: Any?): Boolean {
             try {
                 if (left is Boolean && right is Boolean)
-                    return true
-                throw MismatchingLiteralsException(operator)
-            } catch (e: MismatchingLiteralsException){
-                println(e)
-                return false
-            }
-        }
-
-        fun checkBothDouble(operator: Any?, left: Any?, right: Any?): Boolean {
-            try {
-                if (left is Double && right is Double)
                     return true
                 throw MismatchingLiteralsException(operator)
             } catch (e: MismatchingLiteralsException){
@@ -397,6 +404,50 @@ class ErrorChecker {
             }catch (e: NonBoolExpressionException){
                 println(e)
             }
+            return false
+        }
+        fun checkExpressionString(left: Any?): Boolean {
+            try {
+                if(left is String)
+                    return true
+                else
+                    throw NonStringExpressionException()
+            }catch (e: NonStringExpressionException){
+                println(e)
+            }
+            return false
+        }
+        fun checkBothSimilar(operator: Any?, left: Any?, right: Any?): Boolean {
+            try {
+                if (left is Double && right is Double || left is String && right is String)
+                    return true
+                throw MismatchingLiteralsException(operator)
+            } catch (e: MismatchingLiteralsException){
+                println(e)
+                return false
+            }
+        }
+        fun checkStringOperation(operator: Any?) {
+            try {
+                if (operator != "plus") throw InvalidStringOperationException()
+            } catch (e: InvalidStringOperationException){
+                println(e)
+            }
+
+        }
+        fun checkBothDouble(operator: Any?, left: Any?, right: Any?): Boolean  {
+            try {
+                if (left is Double && right is Double || left is String && right is String)
+                    return true
+                throw MismatchingLiteralsException(operator)
+            } catch (e: MismatchingLiteralsException){
+                println(e)
+                return false
+            }
+        }
+        fun checkSafeBothDouble(left: Any?, right: Any?): Boolean  {
+            if (left is Double && right is Double)
+                return true
             return false
         }
     }

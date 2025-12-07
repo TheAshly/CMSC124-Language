@@ -19,6 +19,6 @@ class Character {
         const val OPENREF = '('
         const val CLOSEREF = ')'
         val NUMBER = (('0'..'9')).toHashSet()
-//        val ENDOFLINES = ("'>").toHashSet()
+        const val COLON = ':'
     }
 }
