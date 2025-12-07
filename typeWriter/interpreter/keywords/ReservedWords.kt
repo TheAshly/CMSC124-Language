@@ -12,9 +12,10 @@ class ReservedWords(){
 
             // Loops
             "for", "while", "down", "up",
+            "range",
 
             // Checkers
-            "in", // Range
+            "of", // Range
             "to", // Assignment
             "its", // Itself
             "is", // Boolean
@@ -38,10 +39,13 @@ class ReservedWords(){
             "plus", "minus", "times", "over", "modulo",
 
             // Assignment
-            "refers", "equals", "correlates",
+            "refers", "equals", "correlates", "pertains",
 
             // Literals
-            "factual", "faulty", "nothing"
+            "factual", "faulty", "nothing",
+
+            // Function
+            "dear", "sincerely", "retrieve"
             )
         val OPERATORS = hashSetOf(
             // Boolean Comparators
@@ -71,7 +75,7 @@ class ReservedWords(){
         val BOOLEANLITERAL = hashSetOf("factual", "faulty")
 
         const val IDENTIFIER = "Identifier"
-        val ASSIGNMENTS = hashSetOf("refers", "equals", "correlates")
+        val ASSIGNMENTS = hashSetOf("refers", "equals", "correlates", "pertains")
         const val ASSIGNING = "to"
 
         const val PRINT = "i"
@@ -88,6 +92,12 @@ class ReservedWords(){
         const val FOR = "for"
         const val RANGEDOWN = "down"
         const val RANGEUP = "up"
+        const val LETTERCOUNT = "range"
+        const val RANGE = "of"
+
+        const val FUNCTION = "dear"
+        const val RETURN = "sincerely"
+        const val CALLFUNC = "retrieve"
 
     }
 

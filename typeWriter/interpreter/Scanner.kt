@@ -112,6 +112,10 @@ class Scanner {
                 tokens.add(Token("space", " ", null, lineNum))
                 head++
             }
+            else if (char == Character.Companion.COLON){
+                tokens.add(Token("colon", ":", null, lineNum))
+                head++
+            }
             else if (char == Character.Companion.COMMA){
                 tokens.add(Token("comma", ",", null, lineNum))
                 head++
@@ -176,7 +180,7 @@ class Scanner {
 
             lexeme += char
             head++
-        } while(checkChar() !in hashSetOf(Character.Companion.PERIOD, Character.Companion.COMMA, Character.Companion.COMMENT, Character.Companion.SPACE,null))
+        } while(checkChar() !in hashSetOf(Character.Companion.PERIOD, Character.Companion.COMMA,Character.Companion.COLON, Character.Companion.COMMENT, Character.Companion.SPACE,null))
 
         // If it followed proper word format it goes here otherwise it adds an error Token
         if(ErrorChecker.checkLexemeStructure(word, lineNum)){
@@ -229,7 +233,7 @@ class Scanner {
             lexeme += num
             head++
 
-        } while (checkChar() !in hashSetOf(Character.Companion.COMMA, Character.Companion.COMMENT, Character.Companion.SPACE, null))
+        } while (checkChar() !in hashSetOf(Character.Companion.COMMA,Character.Companion.COLON, Character.Companion.COMMENT, Character.Companion.SPACE, null))
 
         // If it followed Proper Numeric Format it goes here otherwise it adds an Error Token
         if (ErrorChecker.checkNumberStructure(checker, lineNum))
@@ -273,7 +277,7 @@ class Scanner {
 
             // Checks if the there is still a character after the ending quotation
             if(endQuote) checker = false
-        } while(!endQuote || checkChar() !in hashSetOf(Character.Companion.PERIOD, Character.Companion.COMMA, Character.Companion.COMMENT,  Character.Companion.SPACE, null))
+        } while(!endQuote || checkChar() !in hashSetOf(Character.Companion.PERIOD, Character.Companion.COMMA, Character.Companion.COLON, Character.Companion.COMMENT,  Character.Companion.SPACE, null))
 
         // If the statement ended properly it goes here otherwise it pushes an error token
         if (ErrorChecker.checkSentenceStructure(checker, lineNum))

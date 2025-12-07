@@ -2,8 +2,12 @@ package typeWriter.interpreter
 
 import typeWriter.interpreter.constructors.Field
 import typeWriter.interpreter.constructors.Node
+import typeWriter.interpreter.constructors.Token
 import typeWriter.interpreter.keywords.ReservedWords
 import typeWriter.interpreter.types.Nothing
+import typeWriter.interpreter.exceptions.ReturnValue
+import typeWriter.interpreter.exceptions.TokenScanningException
+import kotlin.math.exp
 
 class Evaluator() {
     var currentField = Field.Companion.globalField
@@ -44,6 +48,28 @@ class Evaluator() {
                 currentField = currentField.getParent()
 
             }
+
+            ReservedWords.Companion.CALLFUNC -> {
+
+                try {
+                    currentField = Field(parent = currentField)
+                    callingFunc(node)
+                    println("Before" + " " + currentField.retrieve("Number"))
+                    currentField = currentField.getParent()
+                    currentField = currentField.getParent()
+                    println("After" + " " + currentField.retrieve("Number"))
+                } catch (e: ReturnValue){
+                    println("Before" + " " + currentField.retrieve("Number"))
+                    currentField = currentField.getParent()
+                    currentField = currentField.getParent()
+                    println("After" + " " + currentField.retrieve("Number"))
+                    throw ReturnValue(e.message.toString())
+                }
+            }
+            ReservedWords.Companion.RETURN -> {
+                if(node.left is String)
+                    throw ReturnValue(currentField.retrieve(node.left).toString())
+            }
             else -> expression(node)
         }
         return null
@@ -55,7 +81,7 @@ class Evaluator() {
         when (node.center) {
             "refers" -> {
                 if(node.right is Node)
-                    rightNode = expression(node.right)
+                    rightNode = "\"${expression(node.right)}\""
                 if (ErrorChecker.checkAssignmentString(node.center, rightNode))
                     currentField.initialize((leftNode as String), rightNode)
             }
@@ -66,10 +92,19 @@ class Evaluator() {
                     currentField.initialize((leftNode as String), rightNode)
             }
             "correlates" -> {
-                if(node.right is Node)
-                    rightNode = expression(node.right)
                 if (ErrorChecker.checkAssignmentBoolean(node.center, rightNode))
                     currentField.initialize((leftNode as String), rightNode)
+            }
+            "pertains" -> {
+                try {
+                    if(rightNode is Node){
+                        statement(rightNode)
+                    }
+                } catch (e: ReturnValue){
+                    rightNode = e.message.toString()
+                }
+                rightNode = expression(Node(rightNode, null, null))
+                currentField.initialize((leftNode as String), rightNode)
             }
         }
     }
@@ -145,15 +180,31 @@ class Evaluator() {
                 }
             }
         } else{
-            if(node.left is Node)
-                for(i in forCondition(node.left))
-                    if(node.right is Node){
-                        evaluateProgram(node.right)
+            if(node.left is Node){
+                leftNode = forCondition(node.left)
+            }
+
+            when(leftNode){
+                is String -> {
+                    for(i in leftNode){
+                        currentField.initialize("Letter", "$i")
+                        if(node.right is Node){
+                            evaluateProgram(node.right)
+                        }
                     }
+                }
+                is IntProgression -> {
+                    for(i in leftNode)
+                        if(node.right is Node){
+                            evaluateProgram(node.right)
+                        }
+                }
+            }
+
         }
     }
 
-    fun forCondition(node: Node): IntProgression {
+    fun forCondition(node: Node): Any? {
         var leftNode: Any? = node.left
         var rightNode: Any? = node.right
         if(node.left is Node){
@@ -162,12 +213,80 @@ class Evaluator() {
         if(node.right is Node){
             rightNode = expression(node.right)
         }
-        ErrorChecker.checkBothBoolean(node.center, leftNode, rightNode)
 
         return when (node.center) {
-            "down" -> (leftNode as Double).toInt() downTo (rightNode as Double).toInt()
-            else -> (leftNode as Double).toInt()..(rightNode as Double).toInt()
+            "down" -> {
+                ErrorChecker.checkBothBoolean(node.center, leftNode, rightNode)
+                (leftNode as Double).toInt() downTo (rightNode as Double).toInt()
+            }
+            "up" -> {
+                ErrorChecker.checkBothBoolean(node.center, leftNode, rightNode)
+                (leftNode as Double).toInt()..(rightNode as Double).toInt()
+            }
+            else -> {
+                ErrorChecker.checkExpressionString(leftNode)
+                expression(node.left as Node)
+            }
         }
+    }
+
+
+    fun callingFunc(node: Node) {
+        var leftNode: Any? = node.left
+        var rightNode: Any? = node.right
+        var declarations = HashSet<Any?>()
+        var parameters = HashSet<String>()
+
+        if(rightNode is Node){
+            declarations = getDeclarations(rightNode)
+        }
+        if(leftNode is String){
+            leftNode = Parser.Companion.functions.get(leftNode)
+        }
+        if(leftNode is Node){
+
+            if(leftNode.center != null){
+                if(leftNode.right is Node){
+                    parameters = getParameters(leftNode.right)
+                }
+                val combinedList = parameters.zip(declarations)
+                for ((parameter, declaration) in combinedList) {
+                    if(declaration is Node)
+                        println(parameter + " " + expression(declaration))
+                    if(declaration is Node)
+                        currentField.initialize(parameter, expression(declaration))
+                }
+                if(leftNode.left is Node)
+                    evaluateProgram(leftNode.left)
+            } else {
+                if(leftNode.left is Node)
+                    evaluateProgram(leftNode.left)
+            }
+        }
+    }
+
+
+    fun getDeclarations(node: Node): HashSet<Any?>{
+        var subNode = node
+        val declaration = HashSet<Any?>()
+        declaration.add(subNode.left)
+        while(subNode.center is Node){
+            subNode = subNode.center
+            declaration.add(subNode.left)
+        }
+        return declaration
+    }
+    fun getParameters(node: Node): HashSet<String>{
+        var subNode = node
+        val declaration = HashSet<String>()
+        if(subNode.left is String)
+            declaration.add(subNode.left)
+        while(subNode.center is Node){
+            subNode = subNode.center
+            if(subNode.left is String)
+                declaration.add(subNode.left)
+        }
+        return declaration
     }
 
     fun expression(node: Node): Any?  {
@@ -219,14 +338,14 @@ class Evaluator() {
             if(node.right is Node){
                 rightNode = comparator(node.right)
             }
-            if(ErrorChecker.checkBothDouble(node.center, leftNode, rightNode)) {
+            if(ErrorChecker.checkBothDouble(node.center, leftNode, rightNode))
                 when (node.center) {
                     "exceeding" -> return (leftNode as Double) > (rightNode as Double)
                     "below" -> return (leftNode as Double) < (rightNode as Double)
                     "exceeding or equaling" -> return (leftNode as Double) >= (rightNode as Double)
                     "below or equaling" -> return (leftNode as Double) <= (rightNode as Double)
                 }
-            }
+
         }
         return term(node)
     }
@@ -241,13 +360,18 @@ class Evaluator() {
             if(node.right is Node){
                 rightNode = term(node.right)
             }
-            if(ErrorChecker.checkBothDouble(node.center, leftNode, rightNode)) {
-                when (node.center) {
-                    "plus" -> return (leftNode as Double) + (rightNode as Double)
-                    "minus" -> return (leftNode as Double) - (rightNode as Double)
-                    "times" -> return (leftNode as Double) * (rightNode as Double)
-                    "over" -> return (leftNode as Double) / (rightNode as Double)
-                    "modulo" -> return (leftNode as Double).mod(rightNode as Double)
+            if(ErrorChecker.checkBothSimilar(node.center, leftNode, rightNode)) {
+                if(ErrorChecker.checkSafeBothDouble(leftNode, rightNode))
+                    when (node.center) {
+                        "plus" -> return (leftNode as Double) + (rightNode as Double)
+                        "minus" -> return (leftNode as Double) - (rightNode as Double)
+                        "times" -> return (leftNode as Double) * (rightNode as Double)
+                        "over" -> return (leftNode as Double) / (rightNode as Double)
+                        "modulo" -> return (leftNode as Double).mod(rightNode as Double)
+                    }
+                else{
+                    ErrorChecker.checkStringOperation(node.center)
+                    return (leftNode as String) + (rightNode as String)
                 }
             }
         }

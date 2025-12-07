@@ -71,6 +71,7 @@ fun main(args: Array<String>) {
 //        println("Error: File not found or inaccessible: $fileName")
 //        return
 //    }
+
     try {
         val fullContent: String = file.readText(StandardCharsets.UTF_8)
 
@@ -78,8 +79,10 @@ fun main(args: Array<String>) {
 //        typePrinter.scannerPrinter(tokens)
         val tree: Node? = typeParser.parseTokens(tokens)
 //        typePrinter.parserPrinter(tree)
-        if(tree is Node)
-            typeEvaluator.evaluateProgram(tree)
+        if(tree is Node){
+                typeEvaluator.evaluateProgram(tree)
+        }
+
 
 
     } catch (e: Exception) {
