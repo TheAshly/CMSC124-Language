@@ -1,0 +1,11 @@
+Number equals to 5.
+While factual,
+	If Number is equaling 3,
+		I state, "I will be Skipping this number.".
+		Number equals to Number minus 1.
+		Recommence.
+	I state, "Printing...(number)", referring to Number.
+	Number equals to Number minus 1.
+	If Number is equaling 0,
+		I state, "We have reached 0, stopping!".
+		Abandon.

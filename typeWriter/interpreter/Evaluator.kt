@@ -2,22 +2,67 @@ package typeWriter.interpreter
 
 import typeWriter.interpreter.constructors.Field
 import typeWriter.interpreter.constructors.Node
-import typeWriter.interpreter.constructors.Token
 import typeWriter.interpreter.keywords.ReservedWords
 import typeWriter.interpreter.types.Nothing
 import typeWriter.interpreter.exceptions.ReturnValue
-import typeWriter.interpreter.exceptions.TokenScanningException
-import kotlin.math.exp
+import typeWriter.interpreter.exceptions.LoopHandlerValue
+
+import javax.sound.sampled.AudioSystem
+import java.io.InputStream
+import java.io.BufferedInputStream
+
+fun playBellSound() {
+    val inputStream: InputStream? = object {}.javaClass.getResourceAsStream("/sounds/bell.wav")
+
+    if (inputStream != null) {
+        try {
+            val bufferedIn = BufferedInputStream(inputStream)
+
+            val clip = AudioSystem.getClip()
+            clip.open(AudioSystem.getAudioInputStream(bufferedIn))
+            clip.start()
+
+        } catch (e: Exception) {
+            println("Error playing sound from resource: ${e.message}")
+            e.printStackTrace()
+        }
+    } else {
+        println("Error: Cannot find /sounds/bell.wav inside the JAR file.")
+    }
+}
+
+fun playTypewriterSound() {
+    val inputStream: InputStream? = object {}.javaClass.getResourceAsStream("/sounds/typewriter.wav")
+
+    if (inputStream != null) {
+        try {
+            val bufferedIn = BufferedInputStream(inputStream)
+
+            val clip = AudioSystem.getClip()
+            clip.open(AudioSystem.getAudioInputStream(bufferedIn))
+            clip.start()
+
+        } catch (e: Exception) {
+            println("Error playing sound from resource: ${e.message}")
+            e.printStackTrace()
+        }
+    } else {
+        println("Error: Cannot find /sounds/bell.wav inside the JAR file.")
+    }
+}
 
 class Evaluator() {
     var currentField = Field.Companion.globalField
 
     fun typeWrite(statement: String){
         statement.forEach { char ->
+            playTypewriterSound()
+            Thread.sleep(10L)
             print(char)
-//            Thread.sleep(60L)
+            Thread.sleep(110L)
         }
-        Thread.sleep(80L)
+        playBellSound()
+        Thread.sleep(240L)
         println()
     }
 
@@ -34,77 +79,167 @@ class Evaluator() {
 
     fun statement(node: Node): Any? {
         when(node.center){
-            in ReservedWords.Companion.ASSIGNMENTS -> assigning(node)
-            ReservedWords.Companion.PRINTCALL -> printing(node)
+            ReservedWords.Companion.RETURN -> {
+                var leftNode: Any?
+                if(node.left is Node){
+                    leftNode = expression(node.left)
+                    throw ReturnValue(leftNode.toString())
+                }
+            }
             ReservedWords.Companion.IFSTMT -> {
                 currentField = Field(parent = currentField)
-                condition(node)
-                currentField = currentField.getParent()
+                try {
+                    condition(node)
+                    currentField = currentField.getParent()
+                } catch (e: ReturnValue){
+                    currentField = currentField.getParent()
+                    throw ReturnValue(e.message.toString())
+                }
 
             }
             in ReservedWords.Companion.LOOPSTMT -> {
                 currentField = Field(parent = currentField)
-                looping(node)
-                currentField = currentField.getParent()
-
-            }
-
-            ReservedWords.Companion.CALLFUNC -> {
-
                 try {
-                    currentField = Field(parent = currentField)
-                    callingFunc(node)
-                    println("Before" + " " + currentField.retrieve("Number"))
+                    looping(node)
                     currentField = currentField.getParent()
-                    currentField = currentField.getParent()
-                    println("After" + " " + currentField.retrieve("Number"))
                 } catch (e: ReturnValue){
-                    println("Before" + " " + currentField.retrieve("Number"))
                     currentField = currentField.getParent()
-                    currentField = currentField.getParent()
-                    println("After" + " " + currentField.retrieve("Number"))
                     throw ReturnValue(e.message.toString())
                 }
             }
-            ReservedWords.Companion.RETURN -> {
-                if(node.left is String)
-                    throw ReturnValue(currentField.retrieve(node.left).toString())
+            in ReservedWords.Companion.LOOPHANDLER -> {
+                if(node.center is String)
+                    throw LoopHandlerValue(node.center)
             }
+            ReservedWords.Companion.PRINTCALL -> printing(node)
+            in ReservedWords.Companion.ASSIGNMENTS -> assigning(node)
             else -> expression(node)
         }
         return null
     }
+    fun condition(node: Node) {
+        var leftNode: Any? = node.left
+        if(node.left is Node){
+            leftNode = expression(node.left)
+        }
+        ErrorChecker.checkExpressionBool(leftNode)
+        if(node.right is Node){
+            conditionBlocks(leftNode as Boolean, node.right)
+        }
+    }
+    fun conditionBlocks(result: Boolean, node: Node) {
+        var centerNode: Any? = node.center
+        if(result){
 
-    fun assigning(node: Node) {
-        val leftNode: Any? = node.left
-        var rightNode: Any? = node.right
-        when (node.center) {
-            "refers" -> {
-                if(node.right is Node)
-                    rightNode = "\"${expression(node.right)}\""
-                if (ErrorChecker.checkAssignmentString(node.center, rightNode))
-                    currentField.initialize((leftNode as String), rightNode)
+            if(node.left is Node){
+                evaluateProgram(node.left)
             }
-            "equals" -> {
-                if(node.right is Node)
-                    rightNode = expression(node.right)
-                if (ErrorChecker.checkAssignmentDouble(node.center, rightNode))
-                    currentField.initialize((leftNode as String), rightNode)
-            }
-            "correlates" -> {
-                if (ErrorChecker.checkAssignmentBoolean(node.center, rightNode))
-                    currentField.initialize((leftNode as String), rightNode)
-            }
-            "pertains" -> {
-                try {
-                    if(rightNode is Node){
-                        statement(rightNode)
-                    }
-                } catch (e: ReturnValue){
-                    rightNode = e.message.toString()
+        } else {
+            if(node.center is Node){
+                centerNode = expression(node.center)
+                ErrorChecker.checkExpressionBool(centerNode)
+                if(node.right is Node){
+                    conditionBlocks(centerNode as Boolean, node.right)
                 }
-                rightNode = expression(Node(rightNode, null, null))
-                currentField.initialize((leftNode as String), rightNode)
+            }
+        }
+    }
+
+    fun looping(node: Node) {
+        var leftNode: Any? = node.left
+        if (node.center == ReservedWords.Companion.WHILE) {
+
+            // Use an infinite loop and manage the condition internally
+            while (true) {
+                var leftNode: Any? = null // Declare inside the loop so it's fresh every time
+
+                // Guaranteed re-evaluation of the condition expression
+                if (node.left is Node) {
+                    leftNode = expression(node.left)
+                }
+                // Note: You should handle the 'else' case here if 'node.left' can be null or something else
+
+                // Check if the condition is still true
+                ErrorChecker.checkExpressionBool(leftNode) // Ensure it's a boolean
+                if (!(leftNode as Boolean)) {
+                    break // Exit the loop if the condition is now false
+                }
+
+                // --- Execute the loop body (node.right) ---
+                if (node.right is Node) {
+                    try {
+                        evaluateProgram(node.right)
+                    } catch (e: LoopHandlerValue) {
+                        if (e.message.toString() == ReservedWords.Companion.BREAK)
+                            break
+                        else if (e.message.toString() == ReservedWords.Companion.CONTINUE) {
+                            continue
+                        }
+                    }
+                }
+            }
+        } else{
+            if(node.left is Node){
+                leftNode = forCondition(node.left)
+            }
+
+            when(leftNode){
+                is String -> {
+                    for(i in leftNode){
+                        currentField.initialize("Letter", "$i")
+                        if(node.right is Node){
+                            try {
+                                evaluateProgram(node.right)
+                            } catch (e: LoopHandlerValue){
+                                if(e.message.toString() == ReservedWords.Companion.BREAK)
+                                    break
+                                else if(e.message.toString() == ReservedWords.Companion.CONTINUE)
+                                    continue
+                            }
+                        }
+                    }
+                }
+                is IntProgression -> {
+                    for(i in leftNode){
+                        currentField.initialize("Count", i)
+                        if(node.right is Node){
+                            try {
+                                evaluateProgram(node.right)
+                            } catch (e: LoopHandlerValue){
+                                if(e.message.toString() == ReservedWords.Companion.BREAK)
+                                    break
+                                else if(e.message.toString() == ReservedWords.Companion.CONTINUE)
+                                    continue
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+    }
+    fun forCondition(node: Node): Any? {
+        var leftNode: Any? = node.left
+        var rightNode: Any? = node.right
+        if(node.left is Node){
+            leftNode = expression(node.left)
+        }
+        if(node.right is Node){
+            rightNode = expression(node.right)
+        }
+
+        return when (node.center) {
+            "down" -> {
+                ErrorChecker.checkBothDouble(node.center, leftNode, rightNode)
+                (leftNode as Double).toInt() downTo (rightNode as Double).toInt()
+            }
+            "up" -> {
+                ErrorChecker.checkBothDouble(node.center, leftNode, rightNode)
+                (leftNode as Double).toInt()..(rightNode as Double).toInt()
+            }
+            else -> {
+                ErrorChecker.checkExpressionString(leftNode)
+                expression(node.left as Node)
             }
         }
     }
@@ -135,158 +270,27 @@ class Evaluator() {
 
     }
 
-    fun condition(node: Node) {
-        var leftNode: Any? = node.left
-        if(node.left is Node){
-            leftNode = expression(node.left)
-        }
-        ErrorChecker.checkExpressionBool(leftNode)
-        if(node.right is Node){
-            conditionBlocks(leftNode as Boolean, node.right)
-        }
-    }
-
-    fun conditionBlocks(result: Boolean, node: Node) {
-        var centerNode: Any? = node.center
-        if(result){
-
-            if(node.left is Node){
-                evaluateProgram(node.left)
-            }
-        } else {
-            if(node.center is Node){
-                centerNode = expression(node.center)
-                ErrorChecker.checkExpressionBool(centerNode)
-                if(node.right is Node){
-                    conditionBlocks(centerNode as Boolean, node.right)
-                }
-            }
-        }
-    }
-    fun looping(node: Node) {
-        var leftNode: Any? = node.left
-        if(node.center == ReservedWords.Companion.WHILE){
-            if(node.left is Node){
-                leftNode = expression(node.left)
-            }
-            ErrorChecker.checkExpressionBool(leftNode)
-            while(leftNode as Boolean){
-                if(node.left is Node){
-                    leftNode = expression(node.left)
-                }
-                ErrorChecker.checkExpressionBool(leftNode)
-                if(node.right is Node){
-                    evaluateProgram(node.right)
-                }
-            }
-        } else{
-            if(node.left is Node){
-                leftNode = forCondition(node.left)
-            }
-
-            when(leftNode){
-                is String -> {
-                    for(i in leftNode){
-                        currentField.initialize("Letter", "$i")
-                        if(node.right is Node){
-                            evaluateProgram(node.right)
-                        }
-                    }
-                }
-                is IntProgression -> {
-                    for(i in leftNode)
-                        if(node.right is Node){
-                            evaluateProgram(node.right)
-                        }
-                }
-            }
-
-        }
-    }
-
-    fun forCondition(node: Node): Any? {
-        var leftNode: Any? = node.left
+    fun assigning(node: Node) {
+        val leftNode: Any? = node.left
         var rightNode: Any? = node.right
-        if(node.left is Node){
-            leftNode = expression(node.left)
-        }
-        if(node.right is Node){
-            rightNode = expression(node.right)
-        }
-
-        return when (node.center) {
-            "down" -> {
-                ErrorChecker.checkBothBoolean(node.center, leftNode, rightNode)
-                (leftNode as Double).toInt() downTo (rightNode as Double).toInt()
+        when (node.center) {
+            "refers" -> {
+                if(node.right is Node)
+                    rightNode = "\"${expression(node.right)}\""
+                if (ErrorChecker.checkAssignmentString(node.center, rightNode))
+                    currentField.initialize((leftNode as String), rightNode)
             }
-            "up" -> {
-                ErrorChecker.checkBothBoolean(node.center, leftNode, rightNode)
-                (leftNode as Double).toInt()..(rightNode as Double).toInt()
+            "equals" -> {
+                if(node.right is Node)
+                    rightNode = expression(node.right)
+                if (ErrorChecker.checkAssignmentDouble(node.center, rightNode))
+                    currentField.initialize((leftNode as String), rightNode)
             }
-            else -> {
-                ErrorChecker.checkExpressionString(leftNode)
-                expression(node.left as Node)
+            "correlates" -> {
+                if (ErrorChecker.checkAssignmentBoolean(node.center, rightNode))
+                    currentField.initialize((leftNode as String), rightNode)
             }
         }
-    }
-
-
-    fun callingFunc(node: Node) {
-        var leftNode: Any? = node.left
-        var rightNode: Any? = node.right
-        var declarations = HashSet<Any?>()
-        var parameters = HashSet<String>()
-
-        if(rightNode is Node){
-            declarations = getDeclarations(rightNode)
-        }
-        if(leftNode is String){
-            leftNode = Parser.Companion.functions.get(leftNode)
-        }
-        if(leftNode is Node){
-
-            if(leftNode.center != null){
-                if(leftNode.right is Node){
-                    parameters = getParameters(leftNode.right)
-                }
-                val combinedList = parameters.zip(declarations)
-                for ((parameter, declaration) in combinedList) {
-                    if(declaration is Node)
-                        println(parameter + " " + expression(declaration))
-                    if(declaration is Node)
-                        currentField.initialize(parameter, expression(declaration))
-                }
-                if(leftNode.left is Node)
-                    evaluateProgram(leftNode.left)
-            } else {
-                if(leftNode.left is Node)
-                    evaluateProgram(leftNode.left)
-            }
-        }
-    }
-
-
-    fun getDeclarations(node: Node): HashSet<Any?>{
-        var subNode = node
-        val declaration = HashSet<Any?>()
-        declaration.add(subNode.left)
-        while(subNode.center is Node){
-            subNode = subNode.center
-            declaration.add(subNode.left)
-        }
-        return declaration
-    }
-    fun getParameters(node: Node): HashSet<String>{
-        var subNode = node
-        val declaration = HashSet<String>()
-        if(subNode.left is String)
-            declaration.add(subNode.left)
-        while(subNode.center is Node){
-            subNode = subNode.center
-            if(subNode.left is String)
-                declaration.add(subNode.left)
-        }
-        return declaration
     }
 
     fun expression(node: Node): Any?  {
@@ -400,6 +404,19 @@ class Evaluator() {
             "true" -> true
             "false" -> false
             "nothing" -> Nothing()
+            "retrieve" -> {
+                try {
+                    callingFunc(node)
+                    currentField = currentField.getParent()
+                } catch (e: ReturnValue){
+                    val value = primary(Node(e.message.toString(), null, null))
+                    currentField = currentField.getParent()
+                    return value
+                }
+            }
+            "your" -> {
+                return primary(Node(readln(), null, null))
+            }
             is String -> {
                 center.toDoubleOrNull() ?:
                 if (center.contains('"'))
@@ -411,6 +428,78 @@ class Evaluator() {
 
         }
     }
+
+    fun callingFunc(node: Node) {
+        var leftNode: Any? = node.left
+        val rightNode: Any? = node.right
+        var declarations = LinkedHashSet<Any?>()
+        var parameters = LinkedHashSet<String>()
+
+        if(rightNode is Node){
+            declarations = getDeclarations(rightNode)
+        }
+        currentField = Field(parent = currentField)
+
+        if(leftNode is String){
+            leftNode = Parser.Companion.functions.get(leftNode)
+        }
+        if(leftNode is Node){
+            if(leftNode.center != null){
+                if(leftNode.right is Node){
+                    parameters = getParameters(leftNode.right)
+                }
+                val combinedList = parameters.zip(declarations)
+
+                for ((parameter, declaration) in combinedList) {
+                        currentField.initialize(parameter, declaration)
+                }
+                if(leftNode.left is Node)
+                    evaluateProgram(leftNode.left)
+            } else {
+                if(leftNode.left is Node)
+                    evaluateProgram(leftNode.left)
+            }
+        }
+    }
+    fun getDeclarations(node: Node): LinkedHashSet<Any?>{
+        var subNode = node
+        val declaration = LinkedHashSet<Any?>()
+        if(subNode.left is Node)
+            declaration.add(expression(subNode.left))
+        while(subNode.center is Node){
+            subNode = subNode.center
+            if(subNode.left is Node)
+                declaration.add(expression(subNode.left))
+        }
+        return declaration
+    }
+    fun getParameters(node: Node): LinkedHashSet<String>{
+        var subNode = node
+        val declaration = LinkedHashSet<String>()
+        if(subNode.left is String)
+            declaration.add(subNode.left)
+        while(subNode.center is Node){
+            subNode = subNode.center
+            if(subNode.left is String)
+                declaration.add(subNode.left)
+        }
+        return declaration
+    }
+
+//    ReservedWords.Companion.CALLFUNC -> {
+//
+//    }
+//    "pertains" -> {
+//        try {
+//            if(rightNode is Node){
+//                statement(rightNode)
+//            }
+//        } catch (e: ReturnValue){
+//            rightNode = e.message.toString()
+//        }
+//        rightNode = expression(Node(rightNode, null, null))
+//        currentField.initialize((leftNode as String), rightNode)
+//    }
 }
 
 

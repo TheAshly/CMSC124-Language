@@ -4,8 +4,17 @@ class ReservedWords(){
 
     companion object {
         val KEYWORDS = hashSetOf(
+            // Function
+            "dear", "sincerely", "retrieve",
+
+            // Assignment
+            "refers", "equals", "correlates",
+
+            // Literals
+            "factual", "faulty", "nothing",
+
             // Printing and Inputs
-            "i", "you", "state", "referring",
+            "i", "your", "statement", "referring", "state",
 
             // Two-way Selectors
             "if", "otherwise", "else",
@@ -15,7 +24,7 @@ class ReservedWords(){
             "range",
 
             // Checkers
-            "of", // Range
+            "in", // Range
             "to", // Assignment
             "its", // Itself
             "is", // Boolean
@@ -36,16 +45,7 @@ class ReservedWords(){
             "increment", "decrement", "not", "negative",
 
             // Arithmetic Operators
-            "plus", "minus", "times", "over", "modulo",
-
-            // Assignment
-            "refers", "equals", "correlates", "pertains",
-
-            // Literals
-            "factual", "faulty", "nothing",
-
-            // Function
-            "dear", "sincerely", "retrieve"
+            "plus", "minus", "times", "over", "modulo"
             )
         val OPERATORS = hashSetOf(
             // Boolean Comparators
@@ -63,19 +63,19 @@ class ReservedWords(){
             // Arithmetic Operators
             "plus", "minus", "times", "over", "modulo"
         )
+
         val BOOLEANCOMPARATOR = hashSetOf("or", "and")
         val LITERALCOMPARATOR = hashSetOf("equaling", "unlike")
         val VALUECOMPARATOR = hashSetOf("exceeding", "below", "exceeding or equaling", "below or equaling")
-        val OPERATOR = hashSetOf("plus", "minus", "times", "over", "modulo")
         val UNARY = hashSetOf("not", "negative")
+        val OPERATOR = hashSetOf("plus", "minus", "times", "over", "modulo")
 
-        val LITERAL = hashSetOf("Numeric", "Sentence", "Preposition", "Null")
-        val STRING = "Sentence"
+        val LITERAL = hashSetOf("Numeric", "Statement", "Preposition", "Null")
+        val STRING = "Statement"
         val POINTER = "Reference"
-        val BOOLEANLITERAL = hashSetOf("factual", "faulty")
 
         const val IDENTIFIER = "Identifier"
-        val ASSIGNMENTS = hashSetOf("refers", "equals", "correlates", "pertains")
+        val ASSIGNMENTS = hashSetOf("refers", "equals", "correlates")
         const val ASSIGNING = "to"
 
         const val PRINT = "i"
@@ -89,21 +89,20 @@ class ReservedWords(){
 
         val LOOPSTMT =  hashSetOf("while", "for")
         const val WHILE = "while"
-        const val FOR = "for"
         const val RANGEDOWN = "down"
         const val RANGEUP = "up"
         const val LETTERCOUNT = "range"
-        const val RANGE = "of"
+        const val RANGE = "in"
+        val LOOPHANDLER = hashSetOf("abandon", "recommence")
+        const val BREAK = "abandon"
+        const val CONTINUE = "recommence"
 
         const val FUNCTION = "dear"
         const val RETURN = "sincerely"
         const val CALLFUNC = "retrieve"
 
-    }
+        const val REQUEST = "your"
+        const val INPUT = "statement"
 
-    // Keywords to be Decided when to/if to be implemented:
-    // Append
-    // Dear
-    // Sincerely
-    // Exponent
+    }
 }

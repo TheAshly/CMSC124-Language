@@ -1,119 +1,124 @@
-# TYPEWRITER
+# About `Typewriter`
 
-## Creator
-[Your name]
+### Creators
 
-Keith Ashly M. Domingo (TheAshly)\
-John Clyde C. Aparicio (Cl4-Bisk)\
-Rene Andre B. Jocsing (WhiteLicorice)
+**Keith Ashly M. Domingo** (TheAshly/FakeThird)\
+**John Clyde C. Aparicio** (Cl4-Bisk)
 
-## Language Overview
-[Provide a brief description of your programming language - what it's designed for, its main characteristics]
+### Language Overview
 
-The language takes itself from a lot of references such as java/C/python but strays from their syntaxing, this truly elegant language is made to support people who find it difficult to handle technicalities and coding but excel in understanding proper language and grammar.
-“Say goodbye to being a Master Coder, now be an Eloquent Writer.” It closely mimics how common sentences are formed and structured, not on a 1 to 1 basis, as it would prove difficult to do but as it closely mirrors proper grammar, one must only need a proper reading comprehension skill to master it.
+`Typewriter` is a strong and dynamically-typed language that takes itself from references such as Java/C/Python but strays from their syntaxes. 
+`Typewriter` aims to support first time coders and non-coders as the language it not built on efficiency but readability.
+"It's as simple as writing a Letter", is our motto, the language closely mirrors how common sentences are formed and structured,
+such as end the code line with a period instead of a semi-colon, although coders who are also having a hard time handling technicalities could also use the
+language as only proper understanding of grammar and writing is needed.
+---
+## Reserved Keywords
 
-## Keywords
-[List all reserved words that cannot be used as identifiers - include the keyword and a brief description of its purpose]
+### Constructs
+This **reserved keywords** are usually used at the start of a code line and ends with a comma/period, they can also begin with an uppercased letter, only when they are called at the start of a code line.
+
+| Keyword                   | Description              |
+|:--------------------------|:-------------------------|
+| `dear`                    | Function Declaration     |
+| `sincerely`               | Return Value in Function |
+| `retrieve`                | Function Call            |
+| `i state`                 | Print Statement          |
+| `you state `              | User Input               |
+| `if, else, and otherwise` | Conditional Statements   |
+| `for`                     | For Loops                |
+| `while`                   | While Loops              |
+| `abandon`                 | Break Loop               |
+| `recommence`              | Continue Loop            |
+
+### Operators
+This **reserved keywords** are usually used between line codes and is always lowercased all throughout, unless it is called at the beginning at then it can either start with an uppercase or lowercase.
+
+| Operator                       | Description             |
+|:-------------------------------|:------------------------|
+| `refers to`                    | Assignment for Strings  |
+| `equals to`                    | Assignment for Int      |
+| `correlates to`                | Assignment for Boolean  |
+| `or/and`                       | Boolean Comparators     |
+| `equaling/unlike`              | Literal Comparators     |
+| `exceeding/below`              | Numerical Comparator    |
+| `not/negative`                 | Unary Operators         |
+| `plus/minus/times/over/modulo` | Arithmetic Comparators  |
+
+---
+
+### Literal and Types
+- **Numerical -** Literal Representation for Int and Double Values.
+- **Proposition -** Literal Representation for Boolean Values.
+- **Statement -** Literal Representation for String Values.
+- **Letter -** Literal Representation for Char Values.
+- **Empty -** Literal Representation for the null value.
+- **Indention/Spaces -** Literals for indents such as \n and for whitespaces.
+- **Letters -** Literal Representation of a Function.
+
+---
+
+### Comments
 ```
-I state - printing strings and formats
-You state - printing strings and formats
-If, Else, and Otherwise - for if else statements.
-For - for loops.
-While - while loops.
-Abandon - break loops.
-Recommence - continue to the next iteration of loops.
-referring to - calls for formatting in print.
-
+Only has single line comments, in which you use ">".
+e.g. > This is a comment.
 ```
 
-## Operators
-[List all operators organized by category (arithmetic, comparison, logical, assignment, etc.)]
-```
-increment & decrement - One Change Operators
-or & and - Logical Operators
-equals & refer - Assignment Operator for Numeric and Sequence type respectively.
-not & negative- Unary Operators
-equaling, unlike, exceeding, & below - Comparison Operators
-plus, minus, times, over, modulo - Arithmetic Operators
-```
+---
 
-## Literals
-[Describe the format and syntax for each type of literal value (e.g., numbers, strings, characters, etc.) your language supports]
-```
-Numerical - Can both be just int and decimal.
-Proposition (boolean) - factual / faulty (case grammar sensitive).
-Sentences (string) / Letter (string) - enclosed in double quotation marks.
-Empty - null/empty values
-\n - newlines will be used to make sure some productions work.
-```
+### Syntax Style
 
-## Identifiers
-[Define the rules for valid identifiers (variable names, function names, etc.) and whether they are case-sensitive]
+- Code lines ends with a period and code blocks use comma and indention, indentions are important and can not be miscounted.
+- Keywords must be in lowercase, unless it’s the first word of the sentence then there’s leniency.
+- Identifiers and Function Declarations must be in Title Case, with no symbols and is case sensitive.
+- Use parenthesis () for formatting.
+- Retyping of an Identifier is allowed but redeclaration of functions are not allowed, and having a function of the same name as an Identifier is also allowed.
 
-For variables and function names:
-> In Title Case (Only the first letter can be Upppercased), because they are nouns.
-> Doesn’t accept symbols nor numbers.
-> Case sensitive.
+---
 
-## Comments
-[Describe the syntax for comments and whether nested comments are supported]
-```
-> - single line comments
-```
-## Syntax Style
-[Describe whether whitespace is significant, how statements are terminated, and what delimiters are used for blocks and grouping]
-
-Code ends with a period and code blocks use comma and indention.\
-Keywords must be in lowercase, unless it’s the first word of the sentence then there’s leniency.\
-Identifiers must be in Titlecase.\
-Use parenthesis () for formatting.\
-“Is” signifies a start of a boolean expression\
-“In” signifies a range\
-“to” signifies an assignment\
-“it” creates a placeholder identifier in loops\
-Commas can form single line code blocks if the user so wishes.
-
-## Grammar
+### Context-Free Grammar (CFG)
 ```
 program         → statement "." { NEWLINE statement "." }
 
-statement            → assigning_stmt
-                        | printing_stmt
+statement            → function_stmt
+                        | return_stmt
                         | if_stmt
                         | loop_stmt
                         | loop_control
+                        | printing_stmt
+                        | assigning_stmt
+                        | expression
                         | commenting_stmt
-                        | unary_stmt)
-    
-assigning_stmt  → IDENTIFIER ("refers to" | "equals to") expression 
+                        
 
-printing_stmt   → "I state," "“" STRING {["(" IDENTIFIER_PLACEHOLDER] ")" STRING]} "“" [", referring to" (expression|IDENTIFIER){"," (expression|IDENTIFIER)}]
+function_stmt   → "dear" FUNCTION ("," | [":" {IDENTIFIER ","}]) NEWLINE code_block
+
+return_stmt     → "sincerely," expression
 
 if_stmt         → "If" expression "," NEWLINE code_block [else_stmt]
 else_stmt       → "Otherwise" expression "," NEWLINE code_block NEWLINE else_stmt | "Else" "," NEWLINE code_block
 
 loop_stmt       → "While" expression "," NEWLINE code_block | "For" for_condition "," NEWLINE code_block
-for_condition   → IDENTIFIER ("up to" | "down to") expression | "in range" NUMBER
+for_condition   → (IDENTIFIER|NUMBER) ("up to" | "down to") (IDENTIFIER|NUMBER) | "range of" expression
 
-code_block      → INDENT stmt { NEWLINE INDENT stmt }
+code_block      → INDENT stmt "." { NEWLINE INDENT stmt "." }
 
 loop_control    → "Recommence" | "Abandon"
 
-commenting_stmt → ">" STRING NEWLINE
+printing_stmt   → "I state," "“" STRING {["(" [REFERENCE] ")" STRING]} "“" [", referring to" IDENTIFIER {"," IDENTIFIER}]
 
-unary_stmt      → unary IDENTIFIER 
-unary           → "Increment" | "Decrement"
+assigning_stmt  → IDENTIFIER ("refers to" | "equals to" | "correlates to") expression 
 
 expression 	    → comparison { ( "or" | "and" ) comparison }
 comparison      → term [“is” ("unlike" | "equaling" | ("exceeding"|"below")["or" "equaling"] ) term ]
 term       	    → factor { ( "add" | "subtract"|”multiply”|”over”|”modulo”) factor }
 factor		    → ( "invert" | "not" ) factor | primary
-primary    	    → NUMBER | STRING | PREPOSITION | EMPTY | IDENTIFIER
+primary    	    → NUMBER | STRING | PREPOSITION | EMPTY | IDENTIFIER | "retrieve" FUNCTION ("," | ":" {expression ","}]) | "your statement"
+
+commenting_stmt → ">" STRING NEWLINE
 ```
 
-## Sample Code
-[Provide a few examples of valid code in your language to demonstrate the syntax and features]
+### Sample Code: Typewriter
 ```
 Sentence refers to “Hello World”.
 Number equals to 1.
@@ -131,10 +136,55 @@ While it’s factual,
 		Please repeat what’s stated.
 ```
 
+---
 
-## Design Rationale
-[Explain the reasoning behind your design choices]
+### Running Typewriter
 
-This is the Typewriter programming language, where you can pour your heart into making an "elegant" literature without sacrificing both features and functionalities of being a programming language. Its purpose is to endure the unknowingly "poor" and "not elegant" style of programmers, who wish to lean back into the basics of learning grammar in their grade schooler's time. Or maybe for someone who wishes to shift to Literature, a very "elegant" course, but gets inflicted on having the Computer Science's monthly salary in companies. A very "elegant" solution for every "not elegant" user. The Typewriter language highlights an "elegant" value for prioritizing readability over one-dollar words, ensuring that even grade schoolers (jk) can read and understand code without having to overcomplicate over puny and "not so very elegant" symbols. The new design of the language can enable faster prototyping for engineers, all while learning more grammar without sacrificing value for execution speed. This is a very "elegant" way to reduce the gap between development and development of programs. The syntax of this language is very simple, yet so concise that programmers have to learn basic grammar in order to create code as mesmerizing and as "elegant" as the language itself. Unlike other languages, this "elegant" language offers a top of the line readability and parallelization for computations, making it the high-end language with a syntax similar to Python and an efficiency rivaling to C.
+Run this command on your cmd while in the directory of the command:
+```
+kotlinc src/*. kt -include-runtime -d typewrite.jar
+```
 
+Then put the path to the directory in your system's Environment Variables Path.
+```
+C:\Users\Name\Downloads\...\CMSC124-Language
+```
+Then you can read files with this command (while in the directory of the file):
+```
+typewrite test/example.txt
+```
+
+---
+
+### Error Handling
+
+`Typewriter` provides clear error messages and what line they are found, all of which you can find in the **Exceptions Folder**.
+
+---
+
+
+### Design Rationale
+
+`Typewriter` is a programming language where you can pour your heart into writing a literature without sacrificing both features and functionalities of a being a programming language.
+The language highlights a value for prioritizing readability over one-dollar-words and jargons that only those who are taking **Computer Science** can understand, 
+ensuring that even those who have no prior coding experience can easily be explained to how or what does the code do without having to overcomplicate over the vast use of symbols.
+The new design of the language can enable faster learning curve for beginners, all while learning coding practices without sacrificing value for execution speed.
+This is an elegant way to reduce the gap between those in the know and those who can't, as the syntax of the language is very simple, yet so concise
+that users don't need to memorize or learn a lot of information to use the language. In the end, the main reason of choosing this project was all about the heart,
+the codes we are writing these days are so technical with no sense of humanity between the screen and the writer; That's where `Typewriter` comes in , and uses terms we are
+all but familiar with when writing a thought or letter, Dear, Sincerely, State, to name a few. It adds back the person and the emotions behind the screen,
+reminiscing a time, where text was written with click and a clank, as a reminder that even
+through it all, the code we are writing is always meant for someone to use or to read, just like we say, `"It's as easy as writing a letter."`
+---
+### License
+**Educational Use Only**
+
+This project was created as an academic project for the CMSC 124 - Design and Implementation of Programming Languages.
+
+- Free for **educational purposes** (learning, teaching, academic research)
+- Free for **personal, non-commercial use**
+
+**Copyright © 2025 Keith Ashly M. Domingo and John Clyde C. Aparicio**
+
+---
 

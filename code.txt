@@ -1,8 +1,0 @@
-Number equals to 3.
-
-Sentence refers to "Jeb".
-
-I state, "String 1: (shesh)", referring to Sentence.
-
-For i in range 3,
-	I state, "Char: (damn)", referring to Sentence.
