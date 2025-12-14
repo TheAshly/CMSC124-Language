@@ -1,0 +1,11 @@
+Person refers to "Clyde".
+> This is a comment.
+I state, "Hello to (person)", referring to Person.
+For 5 down to 0,
+	If Count is equaling 5,
+		I state, "This runs because it’s factual".
+		I state, "We start at (number)!", referring to Count.
+	Otherwise Count is equaling 5,
+		I state, "We're halfway there, (number)!", referring to Count.
+	Else,
+		I state, "It is currently (number).", referring to Count.

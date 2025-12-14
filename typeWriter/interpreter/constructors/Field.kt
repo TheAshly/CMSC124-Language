@@ -23,7 +23,19 @@ class Field(private val parent: Field? = null) {
     fun getParent(): Field {
         return this.parent ?: this
     }
+    fun changeField(): Field {
+        this.saveField()
+        return Field()
+    }
+    fun saveField(){
+        saveField = this
+    }
+    fun retrieveField(): Field {
+        return saveField
+    }
+
     companion object{
         val globalField = Field()
+        var saveField = Field()
     }
 }

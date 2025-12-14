@@ -1,0 +1,6 @@
+Dear Fibonacci: Number,
+	if Number is below or equaling 1,
+		Sincerely, Number.
+	Sincerely, retrieve Fibonacci: Number minus 1. plus retrieve Fibonacci: Number minus 2..
+Fibonacci equals to retrieve Fibonacci: 7..
+I state, "The answer to this is: (number).", referring to Fibonacci.
