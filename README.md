@@ -12,7 +12,9 @@
 "It's as simple as writing a Letter", is our motto, the language closely mirrors how common sentences are formed and structured,
 such as end the code line with a period instead of a semi-colon, although coders who are also having a hard time handling technicalities could also use the
 language as only proper understanding of grammar and writing is needed.
+
 ---
+
 ## Reserved Keywords
 
 ### Constructs
@@ -175,7 +177,9 @@ the codes we are writing these days are so technical with no sense of humanity b
 all but familiar with when writing a thought or letter, Dear, Sincerely, State, to name a few. It adds back the person and the emotions behind the screen,
 reminiscing a time, where text was written with click and a clank, as a reminder that even
 through it all, the code we are writing is always meant for someone to use or to read, just like we say, `"It's as easy as writing a letter."`
+
 ---
+
 ### License
 **Educational Use Only**
 
