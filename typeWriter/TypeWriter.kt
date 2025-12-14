@@ -8,6 +8,8 @@ import typeWriter.interpreter.Printer
 
 import typeWriter.interpreter.constructors.Node
 import typeWriter.interpreter.constructors.Token
+import typeWriter.interpreter.exceptions.LoopHandlerValue
+import typeWriter.interpreter.exceptions.ReturnValue
 
 //⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 //⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢿⣛⣿⣝⣻⣻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
@@ -58,36 +60,36 @@ fun main(args: Array<String>) {
     val typeScanner = Scanner()
     val typeParser = Parser()
     val typeEvaluator = Evaluator()
-    val typePrinter = Printer()
+//    val typePrinter = Printer()
 
-//    if (args.isEmpty()) {
-//        println("Usage: mylang <filename>")
-//        return
-//    }
-//    val fileName = args[0]
-    val file = File("C:\\Users\\Keith\\Downloads\\data.txt")
+    if (args.isEmpty()) {
+        println("Usage: mylang <filename>")
+        return
+    }
+    val fileName = args[0]
+    val file = File(fileName)
 
-//    if (!file.exists() || !file.isFile) {
-//        println("Error: File not found or inaccessible: $fileName")
-//        return
-//    }
+    if (!file.exists() || !file.isFile) {
+        println("Error: File not found or inaccessible: $fileName")
+        return
+    }
 
     try {
         val fullContent: String = file.readText(StandardCharsets.UTF_8)
 
         val tokens: MutableList<Token> = typeScanner.scanLine(fullContent)
-//        typePrinter.scannerPrinter(tokens)
+//          typePrinter.scannerPrinter(tokens)
         val tree: Node? = typeParser.parseTokens(tokens)
-//        typePrinter.parserPrinter(tree)
-        if(tree is Node){
-                typeEvaluator.evaluateProgram(tree)
-        }
-
-
+//          typePrinter.parserPrinter(tree)
+        if(tree is Node)
+            typeEvaluator.evaluateProgram(tree)
 
     } catch (e: Exception) {
         println("Error reading file: ${e.message}")
+    } catch (e: ReturnValue) {
+        println("Sincerely can only be called inside a function.")
+    } catch (e: LoopHandlerValue) {
+        println("Abandon and Recommence can only be called inside loop blocks.")
     }
     System.gc()
-
 }

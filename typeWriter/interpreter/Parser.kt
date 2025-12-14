@@ -11,14 +11,13 @@ class Parser() {
     companion object{
         var functions = hashMapOf<String, Node>()
     }
-    // Initializing Parser Variables
+
     var listIterator = mutableListOf<Token>().listIterator()
     var currToken: Token = Token("Placeholder", "Placeholder", null, 1)
     var currLineNum: Int = 0
     var indentLevel: Int = 0
     var expectedIndent: Int = 0
 
-    // Gets the next token in the iterable list of tokens
     fun lex(){
         if(listIterator.hasNext()) {
             currToken = listIterator.next()
@@ -29,7 +28,6 @@ class Parser() {
         }
     }
 
-    // Parses the token list taken from the scanner
     fun parseTokens(tokens: MutableList<Token>): Node? {
 
         this.listIterator = tokens.listIterator()
@@ -40,7 +38,7 @@ class Parser() {
         return program()
     }
 
-    fun program(): Node? {
+    fun program(): Node {
         currLineNum = currToken.line
         var programNode = statement()
         while (currLineNum != currToken.line){
@@ -53,13 +51,11 @@ class Parser() {
     fun statement(): Node {
         var stmt: Node
         when(currToken.type){
-            ReservedWords.Companion.IDENTIFIER -> {
-                stmt = assigningStmt()
-                ErrorChecker.checkEndingPeriod(currToken)
-                lex()
+            ReservedWords.Companion.FUNCTION -> {
+                stmt = functionStmt()
             }
-            ReservedWords.Companion.PRINT -> {
-                stmt = printingStmt()
+            ReservedWords.Companion.RETURN -> {
+                stmt = returnStmt()
                 ErrorChecker.checkEndingPeriod(currToken)
                 lex()
             }
@@ -69,47 +65,178 @@ class Parser() {
             in ReservedWords.Companion.LOOPSTMT -> {
                 stmt = loopStmt()
             }
-            ReservedWords.Companion.FUNCTION -> {
-                stmt = functionStmt()
-            }
-            ReservedWords.Companion.RETURN -> {
-                stmt = returnStmt()
+            in ReservedWords.Companion.LOOPHANDLER -> {
+                stmt = Node(currToken.type, null, null)
+                lex()
                 ErrorChecker.checkEndingPeriod(currToken)
                 lex()
-
             }
-            ReservedWords.Companion.CALLFUNC -> {
-                stmt = callStmt()
+            ReservedWords.Companion.PRINT -> {
+                stmt = printingStmt()
+                ErrorChecker.checkEndingPeriod(currToken)
+                lex()
+            }
+            ReservedWords.Companion.IDENTIFIER -> {
+                stmt = assigningStmt()
                 ErrorChecker.checkEndingPeriod(currToken)
                 lex()
             }
             else -> {
-                    stmt = expression()
-                    ErrorChecker.checkEndingPeriod(currToken)
-                    lex()
-                }
+                stmt = expression()
+                ErrorChecker.checkEndingPeriod(currToken)
+                lex()
+            }
         }
         return stmt
     }
 
-    fun assigningStmt(): Node {
-        var stmt: Node
-        val identifier = currToken.lexeme
-        lex()
-
-        ErrorChecker.checkSuccessiveKeywords(currToken, ReservedWords.Companion.ASSIGNMENTS)
-        val assigning = currToken.type
-        lex()
-
-        ErrorChecker.checkSuccessiveKeyword(currToken, ReservedWords.Companion.ASSIGNING)
-        lex()
-        if(assigning == "pertains"){
-            stmt = Node(assigning, identifier, callStmt())
+    fun blockStmt(): Node {
+        var subNode: Node
+        this.indentLevel += 1
+        for(i in 0 until this.indentLevel){
+            ErrorChecker.checkIndentDeclaration(currToken)
+            lex()
         }
-        else{
-            stmt = Node(assigning, identifier, expression())
+        ErrorChecker.checkExceedingIndent(currToken)
+
+        currLineNum = currToken.line
+        subNode = statement()
+
+        var indentCounter = 0
+        OUTER@while (currLineNum != currToken.line){
+            indentCounter = 0
+            for(i in 0 until this.indentLevel){
+                if(currToken.type != "indent"){
+                    if(this.expectedIndent != this.indentLevel){
+                        break@OUTER
+                    }
+                    this.expectedIndent = 0
+                    break
+                }
+                indentCounter++
+                lex()
+            }
+            ErrorChecker.checkExceedingIndent(currToken)
+            currLineNum = currToken.line
+            subNode = Node(subNode, statement(), null)
         }
-        return stmt
+        this.indentLevel -= 1
+        this.expectedIndent = indentCounter
+        return subNode
+    }
+
+    fun functionStmt(): Node {
+        var block: Node
+        lex()
+        ErrorChecker.checkProperIdentifier(currToken)
+        val functionName = currToken.lexeme
+        ErrorChecker.checkFunctionRedeclaration(functions.get(functionName), currLineNum)
+        lex()
+        if(currToken.type == "colon"){
+            lex()
+            val state = "parametered"
+            val parameters = parameters()
+            block = Node(state,blockStmt(), parameters)
+        } else {
+            ErrorChecker.checkEndingComma(currToken)
+            lex()
+            block = Node(null, blockStmt(), null)
+        }
+
+        functions[functionName] = block
+        return Node(null, null, null)
+
+    }
+    fun parameters(): Node? {
+        if(currToken.type == ReservedWords.Companion.IDENTIFIER){
+            val identifier = currToken.lexeme
+            lex()
+            ErrorChecker.checkSuccessiveSymbol(currToken, Character.Companion.COMMA)
+            lex()
+            return Node(parameters(), identifier, null)
+        } else
+            return null
+    }
+
+    fun returnStmt(): Node {
+        val operator = currToken.type
+        lex()
+        ErrorChecker.checkSuccessiveSymbol(currToken, Character.Companion.COMMA)
+        lex()
+        return Node(operator, expression(), null)
+    }
+
+    fun conditionStmt(): Node {
+        var condition: Node
+        val ifstmt = currToken.type
+        lex()
+        val expression = expression()
+        ErrorChecker.checkEndingComma(currToken)
+        lex()
+        condition = Node(ifstmt, expression, conditionMoreStmt(blockStmt()))
+        return condition
+
+    }
+    fun conditionMoreStmt(block: Node): Node {
+        var condition = Node(null, block, null)
+        when (currToken.type) {
+            ReservedWords.Companion.OTHERWISE -> {
+                lex()
+                val expression = expression()
+                ErrorChecker.checkEndingComma(currToken)
+                lex()
+                condition = Node(expression, block, conditionMoreStmt(blockStmt()))
+            }
+            ReservedWords.Companion.ELSESTMT -> {
+                lex()
+                ErrorChecker.checkEndingComma(currToken)
+                lex()
+                condition = Node(Node("true",null , null),
+                    block ,
+                    Node(null, blockStmt(), null))
+            }
+        }
+        return condition
+    }
+
+    fun loopStmt(): Node {
+        var expression: Node
+        val loopstmt = currToken.type
+        lex()
+        if(loopstmt == ReservedWords.Companion.WHILE){
+            expression = expression()
+            ErrorChecker.checkEndingComma(currToken)
+            lex()
+
+        } else {
+            expression = forCondition()
+            ErrorChecker.checkEndingComma(currToken)
+            lex()
+        }
+
+        return Node(loopstmt, expression, blockStmt())
+    }
+    fun forCondition(): Node {
+        var operator: String
+        if(currToken.type == ReservedWords.Companion.LETTERCOUNT){
+            operator = currToken.type
+            lex()
+            ErrorChecker.checkSuccessiveKeyword(currToken, ReservedWords.Companion.RANGE)
+            lex()
+            return Node(operator, expression(), null)
+        } else{
+            var leftexpr = expression()
+            if(currToken.type == ReservedWords.Companion.RANGEUP)
+                operator = currToken.type
+            else {
+                ErrorChecker.checkSuccessiveKeyword(currToken, ReservedWords.Companion.RANGEDOWN)
+                operator = currToken.type
+            }
+            lex()
+            ErrorChecker.checkSuccessiveKeyword(currToken, ReservedWords.Companion.ASSIGNING)
+            lex()
+            return Node(operator, leftexpr, expression())
+        }
     }
 
     fun printingStmt(): Node {
@@ -161,195 +288,18 @@ class Parser() {
         }
         return stmt
     }
-    fun conditionStmt(): Node {
-        var condition: Node
-        val ifstmt = currToken.type
-        lex()
-        val expression = expression()
-        ErrorChecker.checkEndingComma(currToken)
-        lex()
-        condition = Node(ifstmt, expression, conditionMoreStmt(blockStmt()))
-        return condition
 
-    }
-
-    fun conditionMoreStmt(block: Node): Node {
-        var condition = Node(null, block, null)
-        when (currToken.type) {
-            ReservedWords.Companion.OTHERWISE -> {
-                lex()
-                val expression = expression()
-                ErrorChecker.checkEndingComma(currToken)
-                lex()
-                condition = Node(expression, block, conditionMoreStmt(blockStmt()))
-            }
-            ReservedWords.Companion.ELSESTMT -> {
-                lex()
-                ErrorChecker.checkEndingComma(currToken)
-                lex()
-                condition = Node(Node("true",null , null),
-                    block ,
-                    Node(null, blockStmt(), null))
-            }
-        }
-        return condition
-    }
-
-    fun loopStmt(): Node {
-        var expression: Node
-        val loopstmt = currToken.type
-        lex()
-        if(loopstmt == ReservedWords.Companion.WHILE){
-            expression = expression()
-            ErrorChecker.checkEndingComma(currToken)
-            lex()
-
-        } else {
-            expression = forCondition()
-            ErrorChecker.checkEndingComma(currToken)
-            lex()
-        }
-
-        return Node(loopstmt, expression, blockStmt())
-    }
-
-    fun forCondition(): Node {
-        var operator: String
-        if(currToken.type == ReservedWords.Companion.LETTERCOUNT){
-            operator = currToken.type
-            lex()
-            ErrorChecker.checkSuccessiveKeyword(currToken, ReservedWords.Companion.RANGE)
-            lex()
-            return Node(operator, expression(), null)
-        } else{
-            var leftexpr = expression()
-            if(currToken.type == ReservedWords.Companion.RANGEUP)
-                operator = currToken.type
-            else {
-                ErrorChecker.checkSuccessiveKeyword(currToken, ReservedWords.Companion.RANGEDOWN)
-                operator = currToken.type
-            }
-            lex()
-            ErrorChecker.checkSuccessiveKeyword(currToken, ReservedWords.Companion.ASSIGNING)
-            lex()
-            return Node(operator, leftexpr, expression())
-        }
-    }
-
-    fun functionStmt(): Node {
-        var block: Node
-        lex()
-        ErrorChecker.checkProperIdentifier(currToken)
-        val functionName = currToken.lexeme
-        ErrorChecker.checkFunctionRedeclaration(functions.get(functionName))
-        lex()
-        if(currToken.type == "colon"){
-            lex()
-            val state = "parametered"
-            val parameters = parameters()
-            block = Node(state,blockStmt(), parameters)
-        } else {
-            ErrorChecker.checkEndingComma(currToken)
-            lex()
-            block = Node(null, blockStmt(), null)
-        }
-
-        functions[functionName] = block
-        return Node(null, null, null)
-
-    }
-    fun parameters(): Node? {
-        if(currToken.type == ReservedWords.Companion.IDENTIFIER){
-            val identifier = currToken.lexeme
-            lex()
-            ErrorChecker.checkSuccessiveSymbol(currToken, Character.Companion.COMMA)
-            lex()
-            return Node(parameters(), identifier, null)
-        } else
-            return null
-    }
-
-    fun callStmt(): Node {
-        var block: Node
-
-        val operator = currToken.type
-        lex()
-        ErrorChecker.checkProperIdentifier(currToken)
-        val functionName = currToken.lexeme
-        lex()
-
-        if(currToken.type == "colon"){
-            val declarations = declarations()
-            block = Node(operator,functionName , declarations)
-        } else {
-            block = Node(operator, functionName, null)
-        }
-        return block
-
-    }
-    fun declarations(): Node? {
-        if(currToken.type == "colon"){
-            lex()
-        } else if(currToken.type == "period"){
-            return null
-        }
-        else {
-            ErrorChecker.checkSuccessiveSymbol(currToken, Character.Companion.COMMA)
-            lex()
-        }
-        if(currToken.type == ReservedWords.Companion.IDENTIFIER){
-            val literal = currToken.literal
-            lex()
-            return Node(declarations(), literal, null)
-        } else{
-            val identifier = expression()
-            return Node(declarations(), identifier, null)
-        }
-    }
-    fun returnStmt(): Node {
-        val operator = currToken.type
-        lex()
-        ErrorChecker.checkSuccessiveSymbol(currToken, Character.Companion.COMMA)
-        lex()
+    fun assigningStmt(): Node {
         val identifier = currToken.lexeme
         lex()
-        return Node(operator, identifier, null)
-    }
-    fun blockStmt(): Node {
-        var subNode: Node
-        this.indentLevel += 1
-        for(i in 0 until this.indentLevel){
-            ErrorChecker.checkIndentDeclaration(currToken)
-            lex()
-        }
-        ErrorChecker.checkExceedingIndent(currToken)
 
-        currLineNum = currToken.line
-        subNode = statement()
+        ErrorChecker.checkSuccessiveKeywords(currToken, ReservedWords.Companion.ASSIGNMENTS)
+        val assigning = currToken.type
+        lex()
+        ErrorChecker.checkSuccessiveKeyword(currToken, ReservedWords.Companion.ASSIGNING)
+        lex()
 
-
-
-        var indentCounter = 0
-        OUTER@while (currLineNum != currToken.line){
-            indentCounter = 0
-            for(i in 0 until this.indentLevel){
-                if(currToken.type != "indent"){
-                    if(this.expectedIndent != this.indentLevel){
-                        break@OUTER
-                    }
-                    this.expectedIndent = 0
-                    break
-                }
-                indentCounter++
-                lex()
-            }
-            ErrorChecker.checkExceedingIndent(currToken)
-            currLineNum = currToken.line
-            subNode = Node(subNode, statement(), null)
-        }
-        this.indentLevel -= 1
-        this.expectedIndent = indentCounter
-        return subNode
+        return Node(assigning, identifier, expression())
     }
 
     // Context-Free Grammar Functions, returns a Node for the parent and left and right children
@@ -425,7 +375,9 @@ class Parser() {
             expr = Node(operator, factor(), null)
             ErrorChecker.checkVariable(expr, currToken.line)
         } else {
-            expr = Node(primary(), null, null)
+            if(currToken.type == ReservedWords.Companion.CALLFUNC) expr = callStmt()
+            else if(currToken.type == ReservedWords.Companion.REQUEST) expr = inputStmt()
+            else expr = Node(primary(), null, null)
             lex()
             ErrorChecker.checkRedeclaration(currToken)
         }
@@ -444,5 +396,49 @@ class Parser() {
         else
             null
     }
+
+    fun callStmt(): Node {
+        var block: Node
+
+        val operator = currToken.type
+        lex()
+        ErrorChecker.checkProperIdentifier(currToken)
+        val functionName = currToken.lexeme
+        lex()
+
+        if(currToken.type == "colon"){
+            val declarations = declarations()
+            block = Node(operator,functionName , declarations)
+        } else {
+            block = Node(operator, functionName, null)
+        }
+        return block
+
+    }
+    fun declarations(): Node? {
+        if(currToken.type == "colon"){
+            lex()
+        } else if(currToken.type == "period"){
+            return null
+        }
+        else {
+            ErrorChecker.checkSuccessiveSymbol(currToken, Character.Companion.COMMA)
+            lex()
+        }
+
+        val identifier = expression()
+        return Node(declarations(), identifier, null)
+
+    }
+
+    fun inputStmt(): Node {
+        val operator = currToken.type
+        lex()
+        ErrorChecker.checkSuccessiveKeyword(currToken, ReservedWords.Companion.INPUT)
+        return Node(operator, currToken.type, null)
+    }
+
 }
+
+
 

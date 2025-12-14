@@ -32,6 +32,8 @@ import typeWriter.interpreter.exceptions.NonBoolExpressionException
 import typeWriter.interpreter.exceptions.LackingIndentException
 import typeWriter.interpreter.exceptions.NonStringExpressionException
 import typeWriter.interpreter.exceptions.InvalidStringOperationException
+import typeWriter.interpreter.exceptions.InvalidIdentifierException
+import typeWriter.interpreter.exceptions.FunctionRedeclarationException
 
 import typeWriter.interpreter.keywords.Character
 import typeWriter.interpreter.keywords.ReservedWords
@@ -151,7 +153,8 @@ class ErrorChecker {
 
         fun checkRedeclaration(token: Token) {
             try {
-                if (ReservedWords.Companion.LITERAL.contains(token.type) || token.type == ReservedWords.Companion.IDENTIFIER)
+                if (ReservedWords.Companion.LITERAL.contains(token.type) || token.type in hashSetOf(ReservedWords.Companion.IDENTIFIER, ReservedWords.Companion.CALLFUNC,
+                        ReservedWords.Companion.REQUEST))
                     throw LiteralRedeclarationException(token.line)
             } catch (e: LiteralRedeclarationException){
                 println(e)
@@ -299,17 +302,17 @@ class ErrorChecker {
         fun checkProperIdentifier(token: Token) {
             try {
                 if (token.type != ReservedWords.Companion.IDENTIFIER)
-                    throw Exception()
-            } catch (e: Exception){
-                println("checkProperIdentifier")
+                    throw InvalidIdentifierException(token.line)
+            } catch (e: InvalidIdentifierException){
+                println(e)
             }
         }
-        fun checkFunctionRedeclaration(node: Node?) {
+        fun checkFunctionRedeclaration(node: Node?, line: Int) {
             try {
                 if (node != null)
-                    throw Exception()
-            } catch (e: Exception){
-                println("checkFunctionRedeclaration")
+                    throw FunctionRedeclarationException(line)
+            } catch (e: FunctionRedeclarationException){
+                println(e)
             }
         }
 

@@ -281,7 +281,7 @@ class Scanner {
 
         // If the statement ended properly it goes here otherwise it pushes an error token
         if (ErrorChecker.checkSentenceStructure(checker, lineNum))
-            tokens.add(Token("Sentence", "\"$lexeme\"", "\"$lexeme\"", lineNum))
+            tokens.add(Token("Statement", "\"$lexeme\"", "\"$lexeme\"", lineNum))
 
         for(reference in placeholder){
             tokens.add(reference)
